@@ -58,74 +58,6 @@ TetrisGame tetris_game;
 
 const float tetris_cube_size = 2.0f;
 
-// glm::mat4x3 getControlPointsMatrix(int i)
-// {
-// 	glm::vec3 first_control_point;
-// 	if (i == 0)
-// 	{
-// 		first_control_point = control_points.back();
-// 	}
-// 	else
-// 	{
-// 		first_control_point = control_points[i - 1];
-// 	}
-
-// 	glm::vec3 second_control_point = control_points[i];
-
-// 	glm::vec3 third_control_point;
-// 	glm::vec3 fourth_control_point;
-// 	if (i == control_points.size() - 2)
-// 	{
-// 		third_control_point = control_points[i + 1];
-// 		fourth_control_point = control_points[0];
-// 	}
-// 	else if (i == control_points.size() - 1)
-// 	{
-// 		third_control_point = control_points[0];
-// 		fourth_control_point = control_points[1];
-// 	}
-// 	else
-// 	{
-// 		third_control_point = control_points[i + 1];
-// 		fourth_control_point = control_points[i + 2];
-// 	}
-
-// 	glm::mat4x3 control_points_matrix = glm::mat4x3(first_control_point,
-// 													second_control_point,
-// 													third_control_point,
-// 													fourth_control_point);
-
-// 	return control_points_matrix;
-// }
-
-// void computePartialCatmullRomSpline(int i)
-// {
-// 	glm::mat4x3 control_points_matrix = getControlPointsMatrix(i);
-
-// 	float increment = 1.0f / NUM_SPLINE_POINTS_BETWEEN_CONRTOL_POINTS;
-// 	float loop_cutoff = 1.0f - increment / 4;
-
-// 	spline_points.emplace_back(control_points[i]);
-
-// 	for (float t = increment; t < loop_cutoff; t += increment)
-// 	{
-// 		spline_points.push_back(getCatmullRomSplinePoint(control_points_matrix, t));
-// 	}
-
-// 	if (i < control_points.size() - 1)
-// 	{
-// 		spline_points.emplace_back(control_points[i + 1]);
-// 	}
-// }
-
-// void computeCatmullRomSpline()
-// {
-// 	for (int i = 0; i < control_points.size(); i++)
-// 	{
-// 		computePartialCatmullRomSpline(i);
-// 	}
-// }
-
 void draw_tetris_square(const int i, const int j)
 {
 	ModelMatrix = glm::translate(vec3(j * tetris_cube_size, i * tetris_cube_size, 0.0f));
@@ -183,35 +115,6 @@ void draw_tetris_board()
 		}
 	}
 }
-
-// void draw_camera_path()
-// {
-// 	ModelMatrix = glm::mat4(1.0f);
-// 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-
-// 	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-// 	// glActiveTexture(GL_TEXTURE0);
-// 	// glBindTexture(GL_TEXTURE_2D, Texture);
-// 	// glUniform1i(TextureID, 0);
-
-// 	glUniform1i(is_empty_flag_id, 1);
-
-// 	glEnableVertexAttribArray(0);
-// 	glBindBuffer(GL_ARRAY_BUFFER, camera_line_vertexbuffer);
-// 	glVertexAttribPointer(
-// 		0,		  // attribute
-// 		3,		  // size
-// 		GL_FLOAT, // type
-// 		GL_FALSE, // normalized?
-// 		0,		  // stride
-// 		(void *)0 // array buffer offset
-// 	);
-
-// 	glDrawArrays(GL_LINE_STRIP, 0, spline_points.size());
-
-// 	glDisableVertexAttribArray(0);
-// }
 
 void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
@@ -308,11 +211,6 @@ int main(void)
 	// glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
 	// glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 
-	// computeCatmullRomSpline();
-	// glGenBuffers(1, &camera_line_vertexbuffer);
-	// glBindBuffer(GL_ARRAY_BUFFER, camera_line_vertexbuffer);
-	// glBufferData(GL_ARRAY_BUFFER, spline_points.size() * sizeof(glm::vec3), &spline_points[0], GL_STATIC_DRAW);
-
 	auto lastTime = std::chrono::system_clock::now();
 
 	const float board_x_center = board_width * tetris_cube_size / 2;
@@ -327,7 +225,6 @@ int main(void)
 	ViewMatrix = glm::lookAt(glm::vec3(board_x_center, board_y_center, 125.0f), center, up);
 
 	int i = 0;
-	// int j = 0;
 
 	auto iteration_time = 500ms;
 	auto time_since_last_iteration = 0ms;
@@ -345,20 +242,11 @@ int main(void)
 		auto deltaTimeInMS = std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime);
 		lastTime = currentTime;
 
-		// if (camera_path_is_shown)
-		// {
-		// 	draw_camera_path();
-		// }
 		draw_tetris_board();
 
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
-		// if (!camera_paused)
-		// {
-		// i++;
-		// }
 
 		time_since_last_iteration += deltaTimeInMS;
 
