@@ -23,9 +23,9 @@ void TetrisGame::initialize_game()
     add_next_piece_to_board();
 }
 
-TetrisBoard TetrisGame::get_board()
+BoardSquareColor TetrisGame::get_square(const int i, const int j)
 {
-    return board;
+    return board[i][j];
 }
 
 void TetrisGame::add_seven_pieces_to_queue()

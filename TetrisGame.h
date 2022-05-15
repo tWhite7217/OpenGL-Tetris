@@ -38,7 +38,7 @@ class TetrisGame
 public:
     TetrisGame();
     void iterate_time();
-    TetrisBoard get_board();
+    BoardSquareColor get_square(const int, const int);
 
 private:
     const std::unordered_map<PieceType, BoardSquareColor> piece_colors = {

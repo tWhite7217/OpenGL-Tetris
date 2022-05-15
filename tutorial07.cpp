@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <chrono>
@@ -28,17 +29,21 @@ using namespace std::chrono_literals;
 
 // GLuint Texture;
 // GLuint TextureID;
-GLuint MatrixID;
+GLuint MVPMatrixID;
+GLuint MMatrixID;
+GLuint VMatrixID;
+GLuint LightID;
 GLuint vertexbuffer;
 GLuint uvbuffer;
+GLuint normalbuffer;
 
 GLuint camera_line_vertexbuffer;
 
-GLuint is_empty_flag_id;
+GLuint piece_type_flag_id;
 
 std::vector<glm::vec3> vertices;
 std::vector<glm::vec2> uvs;
-std::vector<glm::vec3> normals; // Won't be used at the moment.
+std::vector<glm::vec3> normals;
 
 glm::mat4 ModelMatrix;
 glm::mat4 ViewMatrix;
@@ -56,20 +61,28 @@ extern const int board_width;
 
 TetrisGame tetris_game;
 
-const float tetris_cube_size = 2.0f;
+const float tetris_cube_size = 2.02f;
+
+float light_pos_x = 7.0f;
+float light_pos_y = 22.0f;
+float light_pos_z = 7.0f;
+const float light_pos_delta = 3.0f;
 
 void draw_tetris_square(const int i, const int j)
 {
 	ModelMatrix = glm::translate(vec3(j * tetris_cube_size, i * tetris_cube_size, 0.0f));
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
-	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	glUniformMatrix4fv(MVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
+	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+	glUniformMatrix4fv(VMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
 	// glActiveTexture(GL_TEXTURE0);
 	// glBindTexture(GL_TEXTURE_2D, Texture);
 	// glUniform1i(TextureID, 0);
 
-	glUniform1i(is_empty_flag_id, 0);
+	glUniform1i(piece_type_flag_id, (int)tetris_game.get_square(i, j));
+	glUniform3f(LightID, light_pos_x, light_pos_y, light_pos_z);
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -93,22 +106,32 @@ void draw_tetris_square(const int i, const int j)
 		(void *)0 // array buffer offset
 	);
 
+	// 3rd attribute buffer : normals
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+	glVertexAttribPointer(
+		2,		  // attribute
+		3,		  // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		0,		  // stride
+		(void *)0 // array buffer offset
+	);
+
 	glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(2);
 }
 
 void draw_tetris_board()
 {
-	auto board = tetris_game.get_board();
-	int num_rows = board.size();
-	int num_columns = board[0].size();
-	for (int i = 0; i < num_rows; i++)
+	for (int i = 0; i < board_height; i++)
 	{
-		for (int j = 0; j < num_columns; j++)
+		for (int j = 0; j < board_width; j++)
 		{
-			if (board[i][j] != EMPTY)
+			if (tetris_game.get_square(i, j) != EMPTY)
 			{
 				draw_tetris_square(i, j);
 			}
@@ -124,9 +147,39 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 		{
 			camera_paused = !camera_paused;
 		}
-		if (key == GLFW_KEY_L)
+		else if (key == GLFW_KEY_L)
 		{
 			camera_path_is_shown = !camera_path_is_shown;
+		}
+		else if (key == GLFW_KEY_KP_7)
+		{
+			light_pos_x -= light_pos_delta;
+			std::cout << light_pos_x << "\n";
+		}
+		else if (key == GLFW_KEY_KP_9)
+		{
+			light_pos_x += light_pos_delta;
+			std::cout << light_pos_x << "\n";
+		}
+		else if (key == GLFW_KEY_KP_4)
+		{
+			light_pos_y -= light_pos_delta;
+			std::cout << light_pos_y << "\n";
+		}
+		else if (key == GLFW_KEY_KP_6)
+		{
+			light_pos_y += light_pos_delta;
+			std::cout << light_pos_y << "\n";
+		}
+		else if (key == GLFW_KEY_KP_1)
+		{
+			light_pos_z -= light_pos_delta;
+			std::cout << light_pos_z << "\n";
+		}
+		else if (key == GLFW_KEY_KP_3)
+		{
+			light_pos_z += light_pos_delta;
+			std::cout << light_pos_z << "\n";
 		}
 	}
 }
@@ -192,14 +245,17 @@ int main(void)
 	GLuint programID = LoadShaders("TransformVertexShader.glsl", "TextureFragmentShader.glsl");
 
 	// Get a handle for our "MVP" uniform
-	MatrixID = glGetUniformLocation(programID, "MVP");
+	MVPMatrixID = glGetUniformLocation(programID, "MVP");
+	MMatrixID = glGetUniformLocation(programID, "M");
+	VMatrixID = glGetUniformLocation(programID, "V");
+	LightID = glGetUniformLocation(programID, "lightPosition_worldspace");
 
 	// Load the texture
 	// Texture = loadDDS("texture.DDS");
 
 	// Get a handle for our "myTextureSampler" uniform
 	// TextureID = glGetUniformLocation(programID, "myTextureSampler");
-	is_empty_flag_id = glGetUniformLocation(programID, "is_empty");
+	piece_type_flag_id = glGetUniformLocation(programID, "piece_type");
 
 	loadOBJ("tetris_cube.obj", vertices, uvs, normals);
 
@@ -210,6 +266,10 @@ int main(void)
 	// glGenBuffers(1, &uvbuffer);
 	// glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
 	// glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
+
+	glGenBuffers(1, &normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
 
 	auto lastTime = std::chrono::system_clock::now();
 
@@ -222,7 +282,7 @@ int main(void)
 	ProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 205.0f);
 	// ViewMatrix = glm::lookAt(spline_points[i % spline_points.size()], center, up);
 	// ViewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, -25.0f), center, up);
-	ViewMatrix = glm::lookAt(glm::vec3(board_x_center, board_y_center, 125.0f), center, up);
+	ViewMatrix = glm::lookAt(glm::vec3(board_x_center, board_y_center, 80.0f), center, up);
 
 	int i = 0;
 
@@ -263,6 +323,7 @@ int main(void)
 	// Cleanup VBO and shader
 	glDeleteBuffers(1, &vertexbuffer);
 	glDeleteBuffers(1, &uvbuffer);
+	glDeleteBuffers(1, &normalbuffer);
 	glDeleteBuffers(1, &camera_line_vertexbuffer);
 	glDeleteProgram(programID);
 	// glDeleteTextures(1, &Texture);
