@@ -3,6 +3,7 @@
 #include <queue>
 #include <unordered_map>
 #include <array>
+#include <functional>
 
 typedef enum
 {
@@ -39,8 +40,19 @@ public:
     TetrisGame();
     void iterate_time();
     BoardSquareColor get_square(const int, const int);
+    void hard_drop();
+    void soft_drop();
+    void handle_left_input();
+    void handle_right_input();
 
 private:
+    typedef enum
+    {
+        LEFT,
+        RIGHT,
+        DOWN
+    } MovementDirection;
+
     const std::unordered_map<PieceType, BoardSquareColor> piece_colors = {
         {I, LIGHT_BLUE},
         {J, DARK_BLUE},
@@ -89,11 +101,15 @@ private:
 
     void initialize_game();
     void add_seven_pieces_to_queue();
-    bool next_piece_should_drop();
-    bool square_cannot_move_down(const int, const int);
+    bool falling_piece_can_move(const MovementDirection);
+    std::function<bool(const int, const int)> get_checker_function(const MovementDirection);
+    void remove_falling_piece_from_board();
+    void add_falling_piece_to_board();
     void add_next_piece_to_board();
     void initialize_falling_piece_positions(const PieceType);
     void move_falling_piece_down();
+    void move_falling_piece_left();
+    void move_falling_piece_right();
     void set_positions_to_color(const PiecePositions, const BoardSquareColor);
     void set_falling_piece_positions_to_one_lower();
 };

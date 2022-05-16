@@ -61,12 +61,20 @@ extern const int board_width;
 
 TetrisGame tetris_game;
 
+bool soft_drop_is_active = false;
+bool left_is_active = false;
+bool right_is_active = false;
+
 const float tetris_cube_size = 2.02f;
 
 float light_pos_x = 7.0f;
 float light_pos_y = 22.0f;
 float light_pos_z = 7.0f;
 const float light_pos_delta = 3.0f;
+
+int soft_drop_counter = 0;
+int movement_counter = 0;
+int iteration_counter = 0;
 
 void draw_tetris_square(const int i, const int j)
 {
@@ -143,13 +151,28 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 {
 	if (action == GLFW_PRESS)
 	{
-		if (key == GLFW_KEY_P)
+		if (key == GLFW_KEY_W)
 		{
-			camera_paused = !camera_paused;
+			tetris_game.soft_drop();
+			soft_drop_is_active = true;
+			soft_drop_counter = 0;
+			iteration_counter = 0;
 		}
-		else if (key == GLFW_KEY_L)
+		else if (key == GLFW_KEY_S)
 		{
-			camera_path_is_shown = !camera_path_is_shown;
+			tetris_game.hard_drop();
+		}
+		else if (key == GLFW_KEY_A)
+		{
+			tetris_game.handle_left_input();
+			left_is_active = true;
+			movement_counter = 0;
+		}
+		else if (key == GLFW_KEY_D)
+		{
+			tetris_game.handle_right_input();
+			right_is_active = true;
+			movement_counter = 0;
 		}
 		else if (key == GLFW_KEY_KP_7)
 		{
@@ -180,6 +203,21 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 		{
 			light_pos_z += light_pos_delta;
 			std::cout << light_pos_z << "\n";
+		}
+	}
+	else if (action == GLFW_RELEASE)
+	{
+		if (key == GLFW_KEY_W)
+		{
+			soft_drop_is_active = false;
+		}
+		else if (key == GLFW_KEY_A)
+		{
+			left_is_active = false;
+		}
+		else if (key == GLFW_KEY_D)
+		{
+			right_is_active = false;
 		}
 	}
 }
@@ -286,8 +324,13 @@ int main(void)
 
 	int i = 0;
 
+	const int sub_iterations_per_soft_drop = 3;
+	const int sub_iterations_per_movement = 5;
+	const int sub_iterations_per_iteration = 15;
+
 	auto iteration_time = 500ms;
-	auto time_since_last_iteration = 0ms;
+	auto sub_iteration_time = iteration_time / sub_iterations_per_iteration;
+	auto time_since_last_sub_iteration = 0ms;
 
 	do
 	{
@@ -308,12 +351,47 @@ int main(void)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		time_since_last_iteration += deltaTimeInMS;
+		time_since_last_sub_iteration += deltaTimeInMS;
 
-		if (time_since_last_iteration > iteration_time)
+		if (time_since_last_sub_iteration > sub_iteration_time)
 		{
-			tetris_game.iterate_time();
-			time_since_last_iteration -= iteration_time;
+			iteration_counter++;
+
+			if (soft_drop_is_active)
+			{
+				soft_drop_counter++;
+				if (soft_drop_counter == sub_iterations_per_soft_drop)
+				{
+					soft_drop_counter = 0;
+					iteration_counter = 0;
+					tetris_game.soft_drop();
+				}
+			}
+
+			if (!(left_is_active && right_is_active) && (left_is_active || right_is_active))
+			{
+				movement_counter++;
+				if (movement_counter == sub_iterations_per_movement)
+				{
+					movement_counter = 0;
+					if (left_is_active)
+					{
+						tetris_game.handle_left_input();
+					}
+					else
+					{
+						tetris_game.handle_right_input();
+					}
+				}
+			}
+
+			if (iteration_counter == sub_iterations_per_iteration)
+			{
+				iteration_counter = 0;
+				tetris_game.iterate_time();
+			}
+
+			time_since_last_sub_iteration -= sub_iteration_time;
 		}
 
 	} // Check if the ESC key was pressed or the window was closed

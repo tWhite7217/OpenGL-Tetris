@@ -45,17 +45,13 @@ void TetrisGame::iterate_time()
     // {
     //     end_game();
     // } else
-    BoardSquareColor piece_color = piece_colors.at(falling_piece.type);
-    set_positions_to_color(falling_piece.positions, EMPTY);
-    if (next_piece_should_drop())
+    if (falling_piece_can_move(DOWN))
     {
-        set_positions_to_color(falling_piece.positions, piece_color);
-        add_next_piece_to_board();
+        move_falling_piece_down();
     }
     else
     {
-        move_falling_piece_down();
-        set_positions_to_color(falling_piece.positions, piece_color);
+        add_next_piece_to_board();
     }
 
     if (upcoming_pieces.empty())
@@ -64,21 +60,53 @@ void TetrisGame::iterate_time()
     }
 }
 
-bool TetrisGame::next_piece_should_drop()
+bool TetrisGame::falling_piece_can_move(const MovementDirection direction)
 {
+    auto square_movement_is_possible = get_checker_function(direction);
+
+    remove_falling_piece_from_board();
+
+    bool result = true;
     for (const auto [i, j] : falling_piece.positions)
     {
-        if (square_cannot_move_down(i, j))
+        if (square_movement_is_possible(i, j))
         {
-            return true;
+            result = false;
+            break;
         }
     }
-    return false;
+
+    add_falling_piece_to_board();
+    return result;
 }
 
-bool TetrisGame::square_cannot_move_down(const int i, const int j)
+void TetrisGame::remove_falling_piece_from_board()
 {
-    return (i == 0) || (board[i - 1][j] != EMPTY);
+    set_positions_to_color(falling_piece.positions, EMPTY);
+}
+
+void TetrisGame::add_falling_piece_to_board()
+{
+    BoardSquareColor piece_color = piece_colors.at(falling_piece.type);
+    set_positions_to_color(falling_piece.positions, piece_color);
+}
+
+std::function<bool(const int, const int)> TetrisGame::get_checker_function(const MovementDirection direction)
+{
+    switch (direction)
+    {
+    case LEFT:
+        return [this](const int i, const int j)
+        { return (j == 0) || (board[i][j - 1] != EMPTY); };
+    case RIGHT:
+        return [this](const int i, const int j)
+        { return (j == (board_width - 1)) || (board[i][j + 1] != EMPTY); };
+    case DOWN:
+        return [this](const int i, const int j)
+        { return (i == 0) || (board[i - 1][j] != EMPTY); };
+    default:
+        exit(1);
+    }
 }
 
 void TetrisGame::add_next_piece_to_board()
@@ -164,9 +192,32 @@ void TetrisGame::initialize_falling_piece_positions(const PieceType type)
 
 void TetrisGame::move_falling_piece_down()
 {
-    BoardSquareColor piece_color = piece_colors.at(falling_piece.type);
-    set_falling_piece_positions_to_one_lower();
-    set_positions_to_color(falling_piece.positions, piece_color);
+    remove_falling_piece_from_board();
+    for (int x = 0; x < falling_piece.positions.size(); x++)
+    {
+        falling_piece.positions[x].first--;
+    }
+    add_falling_piece_to_board();
+}
+
+void TetrisGame::move_falling_piece_left()
+{
+    remove_falling_piece_from_board();
+    for (int x = 0; x < falling_piece.positions.size(); x++)
+    {
+        falling_piece.positions[x].second--;
+    }
+    add_falling_piece_to_board();
+}
+
+void TetrisGame::move_falling_piece_right()
+{
+    remove_falling_piece_from_board();
+    for (int x = 0; x < falling_piece.positions.size(); x++)
+    {
+        falling_piece.positions[x].second++;
+    }
+    add_falling_piece_to_board();
 }
 
 void TetrisGame::set_positions_to_color(const PiecePositions positions, const BoardSquareColor color)
@@ -177,10 +228,33 @@ void TetrisGame::set_positions_to_color(const PiecePositions positions, const Bo
     }
 }
 
-void TetrisGame::set_falling_piece_positions_to_one_lower()
+void TetrisGame::handle_left_input()
 {
-    for (int x = 0; x < falling_piece.positions.size(); x++)
+
+    if (falling_piece_can_move(LEFT))
     {
-        falling_piece.positions[x].first--;
+        move_falling_piece_left();
     }
+}
+
+void TetrisGame::handle_right_input()
+{
+    if (falling_piece_can_move(RIGHT))
+    {
+        move_falling_piece_right();
+    }
+}
+
+void TetrisGame::soft_drop()
+{
+    iterate_time();
+}
+
+void TetrisGame::hard_drop()
+{
+    while (falling_piece_can_move(DOWN))
+    {
+        move_falling_piece_down();
+    }
+    iterate_time();
 }
