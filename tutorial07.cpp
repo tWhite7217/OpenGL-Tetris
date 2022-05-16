@@ -174,6 +174,14 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 			right_is_active = true;
 			movement_counter = 0;
 		}
+		else if (key == GLFW_KEY_LEFT)
+		{
+			tetris_game.rotate_left();
+		}
+		else if (key == GLFW_KEY_RIGHT)
+		{
+			tetris_game.rotate_right();
+		}
 		else if (key == GLFW_KEY_KP_7)
 		{
 			light_pos_x -= light_pos_delta;

@@ -45,7 +45,7 @@ void TetrisGame::iterate_time()
     // {
     //     end_game();
     // } else
-    if (falling_piece_can_move(DOWN))
+    if (falling_piece_can_move(MovementDirection::DOWN))
     {
         move_falling_piece_down();
     }
@@ -93,15 +93,17 @@ void TetrisGame::add_falling_piece_to_board()
 
 std::function<bool(const int, const int)> TetrisGame::get_checker_function(const MovementDirection direction)
 {
+    using MD = MovementDirection;
+
     switch (direction)
     {
-    case LEFT:
+    case MD::LEFT:
         return [this](const int i, const int j)
         { return (j == 0) || (board[i][j - 1] != EMPTY); };
-    case RIGHT:
+    case MD::RIGHT:
         return [this](const int i, const int j)
         { return (j == (board_width - 1)) || (board[i][j + 1] != EMPTY); };
-    case DOWN:
+    case MD::DOWN:
         return [this](const int i, const int j)
         { return (i == 0) || (board[i - 1][j] != EMPTY); };
     default:
@@ -114,6 +116,7 @@ void TetrisGame::add_next_piece_to_board()
     PieceType next_piece_type = top_and_pop(upcoming_pieces);
     BoardSquareColor piece_color = piece_colors.at(next_piece_type);
     falling_piece.type = next_piece_type;
+    falling_piece.rotation_state = RotationState::_0;
     initialize_falling_piece_positions(next_piece_type);
     set_positions_to_color(falling_piece.positions, piece_color);
 }
@@ -123,66 +126,66 @@ void TetrisGame::initialize_falling_piece_positions(const PieceType type)
     switch (type)
     {
     case I:
-        falling_piece.positions = {
+        falling_piece.positions = {{
             {board_height - 2, 3},
             {board_height - 2, 4},
             {board_height - 2, 5},
             {board_height - 2, 6},
-        };
+        }};
         break;
 
     case J:
-        falling_piece.positions = {
+        falling_piece.positions = {{
             {board_height - 1, 3},
             {board_height - 2, 3},
             {board_height - 2, 4},
             {board_height - 2, 5},
-        };
+        }};
         break;
 
     case L:
-        falling_piece.positions = {
+        falling_piece.positions = {{
             {board_height - 1, 5},
             {board_height - 2, 3},
             {board_height - 2, 4},
             {board_height - 2, 5},
-        };
+        }};
         break;
 
     case O:
-        falling_piece.positions = {
+        falling_piece.positions = {{
             {board_height - 1, 4},
             {board_height - 1, 5},
             {board_height - 2, 4},
             {board_height - 2, 5},
-        };
+        }};
         break;
 
     case S:
-        falling_piece.positions = {
+        falling_piece.positions = {{
             {board_height - 1, 4},
             {board_height - 1, 5},
             {board_height - 2, 3},
             {board_height - 2, 4},
-        };
+        }};
         break;
 
     case Z:
-        falling_piece.positions = {
+        falling_piece.positions = {{
             {board_height - 1, 3},
             {board_height - 1, 4},
             {board_height - 2, 4},
             {board_height - 2, 5},
-        };
+        }};
         break;
 
     case T:
-        falling_piece.positions = {
+        falling_piece.positions = {{
             {board_height - 1, 4},
             {board_height - 2, 3},
             {board_height - 2, 4},
             {board_height - 2, 5},
-        };
+        }};
         break;
 
     default:
@@ -231,7 +234,7 @@ void TetrisGame::set_positions_to_color(const PiecePositions positions, const Bo
 void TetrisGame::handle_left_input()
 {
 
-    if (falling_piece_can_move(LEFT))
+    if (falling_piece_can_move(MovementDirection::LEFT))
     {
         move_falling_piece_left();
     }
@@ -239,7 +242,7 @@ void TetrisGame::handle_left_input()
 
 void TetrisGame::handle_right_input()
 {
-    if (falling_piece_can_move(RIGHT))
+    if (falling_piece_can_move(MovementDirection::RIGHT))
     {
         move_falling_piece_right();
     }
@@ -252,9 +255,716 @@ void TetrisGame::soft_drop()
 
 void TetrisGame::hard_drop()
 {
-    while (falling_piece_can_move(DOWN))
+    while (falling_piece_can_move(MovementDirection::DOWN))
     {
         move_falling_piece_down();
     }
     iterate_time();
+}
+
+void TetrisGame::rotate_left()
+{
+    if (falling_piece.type == O)
+    {
+        return;
+    }
+
+    remove_falling_piece_from_board();
+    rotate_falling_piece(RotationDirection::LEFT);
+    add_falling_piece_to_board();
+}
+
+void TetrisGame::rotate_right()
+{
+    if (falling_piece.type == O)
+    {
+        return;
+    }
+
+    remove_falling_piece_from_board();
+    rotate_falling_piece(RotationDirection::RIGHT);
+    add_falling_piece_to_board();
+}
+
+void TetrisGame::rotate_falling_piece(RotationDirection direction)
+{
+    RotationState current_rotation_state;
+
+    PiecePositions possible_new_positions;
+    RotationState possible_new_rotation_state;
+
+    if (direction == RotationDirection::LEFT)
+    {
+        get_left_rotated_positions_and_state(possible_new_positions, possible_new_rotation_state);
+    }
+    else
+    {
+        get_right_rotated_positions_and_state(possible_new_positions, possible_new_rotation_state);
+    }
+
+    auto positions_to_test = possible_new_positions;
+    if (test_and_set_new_positions_and_state(positions_to_test, possible_new_rotation_state))
+    {
+        return;
+    }
+
+    for (auto [i, j] : I_kick_offsets.at({current_rotation_state, possible_new_rotation_state}))
+    {
+        positions_to_test = get_kicked_positions(possible_new_positions, i, j);
+        if (test_and_set_new_positions_and_state(positions_to_test, possible_new_rotation_state))
+        {
+            return;
+        }
+    }
+}
+
+bool TetrisGame::test_and_set_new_positions_and_state(PiecePositions positions_to_test, RotationState new_rotation_state)
+{
+    bool valid = new_positions_are_valid(positions_to_test);
+    if (valid)
+    {
+        falling_piece.positions = positions_to_test;
+        falling_piece.rotation_state = new_rotation_state;
+    }
+    return valid;
+}
+
+PiecePositions TetrisGame::get_kicked_positions(PiecePositions possible_new_positions, int i, int j)
+{
+    PiecePositions offset_positions;
+    int x = 3;
+    for (auto [k, l] : possible_new_positions)
+    {
+        offset_positions[x] = {i + k, j + l};
+        x++;
+    }
+    return offset_positions;
+}
+
+bool TetrisGame::new_positions_are_valid(PiecePositions positions)
+{
+    for (auto [i, j] : positions)
+    {
+        if (i < 0 || i >= board_height ||
+            j < 0 || j >= board_width ||
+            board[i][j] != EMPTY)
+        {
+            return false;
+        }
+    }
+    return true;
+};
+
+void TetrisGame::get_left_rotated_positions_and_state(PiecePositions &new_positions, RotationState &new_state)
+{
+    using RS = RotationState;
+
+    auto [i, j] = falling_piece.positions[0];
+
+    switch (falling_piece.type)
+    {
+    case I:
+        int new_j;
+        int new_i;
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_L;
+            new_j = j + 1;
+            new_positions = {{
+                {i + 1, new_j},
+                {i, new_j},
+                {i - 1, new_j},
+                {i - 2, new_j},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_2;
+            new_i = i - 2;
+            new_positions = {{
+                {new_i, j - 1},
+                {new_i, j},
+                {new_i, j + 1},
+                {new_i, j + 2},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_R;
+            new_j = j + 2;
+            new_positions = {{
+                {i + 2, new_j},
+                {i + 1, new_j},
+                {i, new_j},
+                {i - 1, new_j},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_0;
+            new_i = i - 1;
+            new_positions = {{
+                {new_i, j - 2},
+                {new_i, j - 1},
+                {new_i, j},
+                {new_i, j + 1},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case J:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_L;
+            new_positions = {{
+                {i, j + 1},
+                {i - 1, j + 1},
+                {i - 2, j},
+                {i - 2, j + 1},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j + 1},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_R;
+            new_positions = {{
+                {i + 1, j + 1},
+                {i + 1, j + 2},
+                {i, j + 1},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j - 1},
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case L:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_L;
+            new_positions = {{
+                {i, j - 2},
+                {i, j - 1},
+                {i - 1, j - 1},
+                {i - 2, j - 1},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 1, j + 2},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_R;
+            new_positions = {{
+                {i + 1, j + 1},
+                {i, j + 1},
+                {i - 1, j + 1},
+                {i - 1, j + 2},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j + 1},
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case S:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_L;
+            new_positions = {{
+                {i, j - 1},
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j + 1},
+                {i - 1, j + 2},
+                {i - 2, j},
+                {i - 2, j + 1},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_R;
+            new_positions = {{
+                {i + 1, j},
+                {i, j},
+                {i, j + 1},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j},
+                {i, j + 1},
+                {i - 1, j - 1},
+                {i - 1, j},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case Z:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_L;
+            new_positions = {{
+                {i, j + 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 2, j},
+                {i - 2, j + 1},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_R;
+            new_positions = {{
+                {i + 1, j + 2},
+                {i, j + 1},
+                {i, j + 2},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j - 2},
+                {i, j - 1},
+                {i - 1, j - 1},
+                {i - 1, j},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case T:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_L;
+            new_positions = {{
+                {i, j},
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_R;
+            new_positions = {{
+                {i + 1, j + 1},
+                {i, j + 1},
+                {i, j + 2},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j},
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
+void TetrisGame::get_right_rotated_positions_and_state(PiecePositions &new_positions, RotationState &new_state)
+{
+    using RS = RotationState;
+
+    auto [i, j] = falling_piece.positions[0];
+
+    switch (falling_piece.type)
+    {
+    case I:
+        int new_j;
+        int new_i;
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_R;
+            new_j = j + 2;
+            new_positions = {{
+                {i + 1, new_j},
+                {i, new_j},
+                {i - 1, new_j},
+                {i - 2, new_j},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_2;
+            new_i = i - 2;
+            new_positions = {{
+                {new_i, j - 2},
+                {new_i, j - 1},
+                {new_i, j},
+                {new_i, j + 1},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_L;
+            new_j = j + 2;
+            new_positions = {{
+                {i + 2, new_j},
+                {i + 1, new_j},
+                {i, new_j},
+                {i - 1, new_j},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_0;
+            new_i = i - 1;
+            new_positions = {{
+                {new_i, j - 1},
+                {new_i, j},
+                {new_i, j + 1},
+                {new_i, j + 2},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case J:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_R;
+            new_positions = {{
+                {i, j + 1},
+                {i, j + 2},
+                {i - 1, j + 1},
+                {i - 2, j + 1},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j + 1},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_L;
+            new_positions = {{
+                {i + 1, j + 1},
+                {i, j + 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j - 1},
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case L:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_R;
+            new_positions = {{
+                {i, j - 1},
+                {i - 1, j - 1},
+                {i - 2, j - 1},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j - 1},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_L;
+            new_positions = {{
+                {i + 1, j},
+                {i + 1, j + 1},
+                {i, j + 1},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j + 2},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 1, j + 2},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case S:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_R;
+            new_positions = {{
+                {i, j},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j + 1},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j - 1},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_L;
+            new_positions = {{
+                {i + 1, j - 1},
+                {i, j - 1},
+                {i, j},
+                {i - 1, j},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j + 1},
+                {i, j + 2},
+                {i - 1, j},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case Z:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_R;
+            new_positions = {{
+                {i, j + 2},
+                {i - 1, j + 1},
+                {i - 1, j + 2},
+                {i - 2, j + 1},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j - 1},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_L;
+            new_positions = {{
+                {i + 1, j - 1},
+                {i, j - 1},
+                {i, j},
+                {i - 1, j},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j + 1},
+                {i, j + 2},
+                {i - 1, j},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    case T:
+        switch (falling_piece.rotation_state)
+        {
+        case RS::_0:
+            new_state = RS::_R;
+            new_positions = {{
+                {i, j},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i - 2, j},
+            }};
+            break;
+
+        case RS::_R:
+            new_state = RS::_2;
+            new_positions = {{
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+                {i, j},
+            }};
+            break;
+
+        case RS::_2:
+            new_state = RS::_L;
+            new_positions = {{
+                {i + 1, j + 1},
+                {i, j},
+                {i, j + 1},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        case RS::_L:
+            new_state = RS::_0;
+            new_positions = {{
+                {i, j},
+                {i - 1, j - 1},
+                {i - 1, j},
+                {i - 1, j + 1},
+            }};
+            break;
+
+        default:
+            break;
+        }
+        break;
+
+    default:
+        break;
+    }
 }
