@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
+#include <iostream>
 
 #include "TetrisGame.h"
 
@@ -288,7 +289,7 @@ void TetrisGame::rotate_right()
 
 void TetrisGame::rotate_falling_piece(RotationDirection direction)
 {
-    RotationState current_rotation_state;
+    RotationState current_rotation_state = falling_piece.rotation_state;
 
     PiecePositions possible_new_positions;
     RotationState possible_new_rotation_state;
@@ -308,13 +309,27 @@ void TetrisGame::rotate_falling_piece(RotationDirection direction)
         return;
     }
 
-    for (auto [i, j] : I_kick_offsets.at({current_rotation_state, possible_new_rotation_state}))
+    const auto offsets_map = get_offsets_map_for_piece_type(falling_piece.type);
+
+    for (auto [i, j] : offsets_map.at({current_rotation_state, possible_new_rotation_state}))
     {
         positions_to_test = get_kicked_positions(possible_new_positions, i, j);
         if (test_and_set_new_positions_and_state(positions_to_test, possible_new_rotation_state))
         {
             return;
         }
+    }
+}
+
+TetrisGame::OffsetsMap TetrisGame::get_offsets_map_for_piece_type(PieceType type)
+{
+    if (type == I)
+    {
+        return I_kick_offsets;
+    }
+    else
+    {
+        return standard_kick_offsets;
     }
 }
 
@@ -332,7 +347,7 @@ bool TetrisGame::test_and_set_new_positions_and_state(PiecePositions positions_t
 PiecePositions TetrisGame::get_kicked_positions(PiecePositions possible_new_positions, int i, int j)
 {
     PiecePositions offset_positions;
-    int x = 3;
+    int x = 0;
     for (auto [k, l] : possible_new_positions)
     {
         offset_positions[x] = {i + k, j + l};
@@ -699,7 +714,7 @@ void TetrisGame::get_right_rotated_positions_and_state(PiecePositions &new_posit
 
         case RS::_2:
             new_state = RS::_L;
-            new_j = j + 2;
+            new_j = j + 1;
             new_positions = {{
                 {i + 2, new_j},
                 {i + 1, new_j},
@@ -884,8 +899,8 @@ void TetrisGame::get_right_rotated_positions_and_state(PiecePositions &new_posit
         case RS::_R:
             new_state = RS::_2;
             new_positions = {{
-                {i - 1, j},
-                {i - 1, j + 1},
+                {i - 1, j - 2},
+                {i - 1, j - 1},
                 {i - 2, j - 1},
                 {i - 2, j},
             }};
@@ -894,9 +909,9 @@ void TetrisGame::get_right_rotated_positions_and_state(PiecePositions &new_posit
         case RS::_2:
             new_state = RS::_L;
             new_positions = {{
-                {i + 1, j - 1},
-                {i, j - 1},
+                {i + 1, j + 1},
                 {i, j},
+                {i, j + 1},
                 {i - 1, j},
             }};
             break;
@@ -904,8 +919,8 @@ void TetrisGame::get_right_rotated_positions_and_state(PiecePositions &new_posit
         case RS::_L:
             new_state = RS::_0;
             new_positions = {{
-                {i, j + 1},
-                {i, j + 2},
+                {i, j - 1},
+                {i, j},
                 {i - 1, j},
                 {i - 1, j + 1},
             }};
@@ -935,7 +950,7 @@ void TetrisGame::get_right_rotated_positions_and_state(PiecePositions &new_posit
                 {i - 1, j - 1},
                 {i - 1, j},
                 {i - 1, j + 1},
-                {i, j},
+                {i - 2, j},
             }};
             break;
 

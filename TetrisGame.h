@@ -98,12 +98,14 @@ private:
         {
             int first_state_as_int = static_cast<int>(key.first);
             int second_state_as_int = static_cast<int>(key.second);
-            int to_hash = first_state_as_int * 5 + second_state_as_int;
-            return std::hash<int>{}(to_hash);
+            int hash = first_state_as_int * 4 + second_state_as_int;
+            return size_t(hash);
         }
     };
 
-    const std::unordered_map<std::pair<RotationState, RotationState>, std::array<std::pair<int, int>, 4>, RotationStatePairHashFunction> I_kick_offsets =
+    typedef std::unordered_map<std::pair<RotationState, RotationState>, std::array<std::pair<int, int>, 4>, RotationStatePairHashFunction> OffsetsMap;
+
+    const OffsetsMap I_kick_offsets =
         {
             {{RotationState::_0, RotationState::_R}, {{{-2, 0}, {1, 0}, {-2, -1}, {1, 2}}}},
             {{RotationState::_R, RotationState::_0}, {{{-2, 0}, {-1, 0}, {2, 1}, {-1, -2}}}},
@@ -115,7 +117,7 @@ private:
             {{RotationState::_0, RotationState::_L}, {{{-1, 0}, {2, 0}, {-1, 2}, {2, -1}}}},
     };
 
-    const std::unordered_map<std::pair<RotationState, RotationState>, std::array<std::pair<int, int>, 4>, RotationStatePairHashFunction> standard_kick_offsets =
+    const OffsetsMap standard_kick_offsets =
         {
             {{RotationState::_0, RotationState::_R}, {{{-1, 0}, {-1, 1}, {0, -2}, {-1, -2}}}},
             {{RotationState::_R, RotationState::_0}, {{{1, 0}, {1, -1}, {0, 2}, {1, 2}}}},
@@ -171,4 +173,5 @@ private:
     PiecePositions get_kicked_positions(PiecePositions, int, int);
     bool test_and_set_new_positions_and_state(PiecePositions, RotationState);
     bool new_positions_are_valid(PiecePositions);
+    OffsetsMap get_offsets_map_for_piece_type(PieceType);
 };
