@@ -52,6 +52,7 @@ void TetrisGame::iterate_time()
     }
     else
     {
+        clear_any_full_lines();
         add_next_piece_to_board();
     }
 
@@ -109,6 +110,54 @@ std::function<bool(const int, const int)> TetrisGame::get_checker_function(const
         { return (i == 0) || (board[i - 1][j] != EMPTY); };
     default:
         exit(1);
+    }
+}
+
+void TetrisGame::clear_any_full_lines()
+{
+    std::vector<int> full_lines;
+    for (int i = board_height - 1; i >= 0; i--)
+    {
+        if (line_is_full(i))
+        {
+            full_lines.push_back(i);
+        }
+    }
+    remove_lines(full_lines);
+    add_empty_lines(full_lines.size());
+}
+
+bool TetrisGame::line_is_full(int i)
+{
+    for (auto square : board[i])
+    {
+        if (square == EMPTY)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void TetrisGame::remove_lines(std::vector<int> line_nums)
+{
+    for (auto line_num : line_nums)
+    {
+        for (int i = line_num + 1; i < board_height; i++)
+        {
+            for (int j = 0; j < board_width; j++)
+            {
+                board[i - 1][j] = board[i][j];
+            }
+        }
+    }
+}
+
+void TetrisGame::add_empty_lines(int num_lines)
+{
+    for (int i = board_height - 1; i >= board_height - num_lines; i--)
+    {
+        board[i] = empty_line;
     }
 }
 

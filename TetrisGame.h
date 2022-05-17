@@ -32,7 +32,8 @@ const int board_height = 22;
 const int board_width = 10;
 
 using PiecePositions = std::array<std::pair<int, int>, 4>;
-using TetrisBoard = std::array<std::array<BoardSquareColor, board_width>, board_height>;
+using BoardLine = std::array<BoardSquareColor, board_width>;
+using TetrisBoard = std::array<BoardLine, board_height>;
 
 class TetrisGame
 {
@@ -129,6 +130,8 @@ private:
             {{RotationState::_0, RotationState::_L}, {{{1, 0}, {1, 1}, {0, -2}, {1, -2}}}},
     };
 
+    const BoardLine empty_line = {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}};
+
     TetrisBoard board = {{
         {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
         {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
@@ -160,6 +163,10 @@ private:
     std::function<bool(const int, const int)> get_checker_function(const MovementDirection);
     void remove_falling_piece_from_board();
     void add_falling_piece_to_board();
+    void clear_any_full_lines();
+    bool line_is_full(int);
+    void remove_lines(std::vector<int>);
+    void add_empty_lines(int);
     void add_next_piece_to_board();
     void initialize_falling_piece_positions(const PieceType);
     void move_falling_piece_down();
