@@ -18,6 +18,11 @@ TetrisGame::TetrisGame()
     initialize_game();
 }
 
+int TetrisGame::get_score()
+{
+    return score;
+}
+
 void TetrisGame::initialize_game()
 {
     add_seven_pieces_to_queue();
@@ -41,7 +46,6 @@ void TetrisGame::add_seven_pieces_to_queue()
 
 void TetrisGame::iterate_time()
 {
-    time++;
     // if (game_is_over())
     // {
     //     end_game();
@@ -123,8 +127,12 @@ void TetrisGame::clear_any_full_lines()
             full_lines.push_back(i);
         }
     }
+
     remove_lines(full_lines);
-    add_empty_lines(full_lines.size());
+
+    int num_lines_cleared = full_lines.size();
+    add_empty_lines(num_lines_cleared);
+    score += num_lines_cleared;
 }
 
 bool TetrisGame::line_is_full(int i)

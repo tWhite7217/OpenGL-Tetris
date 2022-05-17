@@ -47,6 +47,7 @@ public:
     void handle_right_input();
     void rotate_left();
     void rotate_right();
+    int get_score();
 
 private:
     enum class MovementDirection
@@ -87,8 +88,7 @@ private:
         RotationState rotation_state;
     } falling_piece;
 
-    // int score;
-    int time;
+    int score = 0;
     std::queue<PieceType> upcoming_pieces;
     std::array<PieceType, 7> seven_bag = {I, J, L, O, S, Z, T};
 

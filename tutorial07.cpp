@@ -27,18 +27,24 @@ using namespace glm;
 
 using namespace std::chrono_literals;
 
-// GLuint Texture;
-// GLuint TextureID;
+GLuint Texture;
+GLuint TextureID;
 GLuint MVPMatrixID;
 GLuint MMatrixID;
 GLuint VMatrixID;
+GLuint PMatrixID;
 GLuint LightID;
 GLuint ambient_id;
 GLuint diffuse_id;
 GLuint specular_id;
+
 GLuint vertexbuffer;
 GLuint uvbuffer;
 GLuint normalbuffer;
+
+GLuint scoreboard_vertexbuffer;
+GLuint scoreboard_uvbuffer;
+GLuint scoreboard_normalbuffer;
 
 float ambient_component = 0.1;
 float diffuse_component = 0.7;
@@ -47,10 +53,15 @@ int specular_exponent = 10;
 GLuint camera_line_vertexbuffer;
 
 GLuint piece_type_flag_id;
+GLuint use_lighting_flag_id;
 
 std::vector<glm::vec3> vertices;
 std::vector<glm::vec2> uvs;
 std::vector<glm::vec3> normals;
+
+std::vector<glm::vec3> scoreboard_vertices;
+std::vector<glm::vec2> scoreboard_uvs;
+std::vector<glm::vec3> scoreboard_normals;
 
 glm::mat4 ModelMatrix;
 glm::mat4 ViewMatrix;
@@ -92,11 +103,12 @@ void draw_tetris_square(const int i, const int j)
 	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 	glUniformMatrix4fv(VMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-	// glActiveTexture(GL_TEXTURE0);
-	// glBindTexture(GL_TEXTURE_2D, Texture);
-	// glUniform1i(TextureID, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, Texture);
+	glUniform1i(TextureID, 0);
 
 	glUniform1i(piece_type_flag_id, (int)tetris_game.get_square(i, j));
+	glUniform1i(use_lighting_flag_id, 1);
 	glUniform3f(LightID, light_pos_x, light_pos_y, light_pos_z);
 
 	glUniform1f(ambient_id, ambient_component);
@@ -156,6 +168,99 @@ void draw_tetris_board()
 			}
 		}
 	}
+}
+
+void draw_scoreboard_digit(int digit_place, int digit_value)
+{
+	ModelMatrix = glm::translate(vec3(0.95f - (digit_place * 0.085f), -0.9f, -0.5f)) * glm::scale(vec3(0.06f, 0.09f, 0.06f));
+	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+
+	glUniformMatrix4fv(MVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
+	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+	glUniformMatrix4fv(VMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+	glUniformMatrix4fv(PMatrixID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, Texture);
+	glUniform1i(TextureID, 0);
+
+	glUniform1i(piece_type_flag_id, -1);
+	glUniform1i(use_lighting_flag_id, 0);
+
+	std::vector<glm::vec2> current_uvs;
+	int displacement_x;
+	int displacement_y;
+	if (digit_value == 0)
+	{
+		displacement_x = 4;
+		displacement_y = 1;
+	}
+	else
+	{
+		displacement_x = (digit_value - 1) % 5;
+		displacement_y = (digit_value - 1) / 5;
+	}
+
+	for (auto xy : scoreboard_uvs)
+	{
+		current_uvs.push_back(glm::vec2(xy.x + (0.2 * displacement_x), xy.y - (0.5 * displacement_y)));
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, current_uvs.size() * sizeof(glm::vec2), &current_uvs[0], GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_vertexbuffer);
+	glVertexAttribPointer(
+		0,		  // attribute
+		3,		  // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		0,		  // stride
+		(void *)0 // array buffer offset
+	);
+
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_uvbuffer);
+	glVertexAttribPointer(
+		1,		  // attribute
+		2,		  // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		0,		  // stride
+		(void *)0 // array buffer offset
+	);
+
+	glDrawArrays(GL_TRIANGLES, 0, scoreboard_vertices.size());
+
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+}
+
+void draw_scoreboard(int score)
+{
+	int thousands = score / 1000;
+	int hundreds = (score / 100) % 10;
+	int tens = (score / 10) % 10;
+	int ones = score % 10;
+
+	if (thousands != 0)
+	{
+		draw_scoreboard_digit(3, thousands);
+		draw_scoreboard_digit(2, hundreds);
+		draw_scoreboard_digit(1, tens);
+	}
+	else if (hundreds != 0)
+	{
+		draw_scoreboard_digit(2, hundreds);
+		draw_scoreboard_digit(1, tens);
+	}
+	else if (tens != 0)
+	{
+		draw_scoreboard_digit(1, tens);
+	}
+
+	draw_scoreboard_digit(0, ones);
 }
 
 void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -335,17 +440,19 @@ int main(void)
 	MVPMatrixID = glGetUniformLocation(programID, "MVP");
 	MMatrixID = glGetUniformLocation(programID, "M");
 	VMatrixID = glGetUniformLocation(programID, "V");
+	PMatrixID = glGetUniformLocation(programID, "P");
 	LightID = glGetUniformLocation(programID, "lightPosition_worldspace");
 	ambient_id = glGetUniformLocation(programID, "ambient_component");
 	diffuse_id = glGetUniformLocation(programID, "diffuse_component");
 	specular_id = glGetUniformLocation(programID, "specular_exponent");
 
 	// Load the texture
-	// Texture = loadDDS("texture.DDS");
+	Texture = loadDDS("SSD_Numbers.DDS");
 
 	// Get a handle for our "myTextureSampler" uniform
-	// TextureID = glGetUniformLocation(programID, "myTextureSampler");
+	TextureID = glGetUniformLocation(programID, "SSD_Texture");
 	piece_type_flag_id = glGetUniformLocation(programID, "piece_type");
+	use_lighting_flag_id = glGetUniformLocation(programID, "use_lighting");
 
 	loadOBJ("tetris_cube.obj", vertices, uvs, normals);
 
@@ -353,13 +460,25 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
-	// glGenBuffers(1, &uvbuffer);
-	// glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	// glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 
 	glGenBuffers(1, &normalbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
 	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+
+	loadOBJ("SSD_Digit.obj", scoreboard_vertices, scoreboard_uvs, scoreboard_normals);
+
+	glGenBuffers(1, &scoreboard_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, scoreboard_vertices.size() * sizeof(glm::vec3), &scoreboard_vertices[0], GL_STATIC_DRAW);
+
+	glGenBuffers(1, &scoreboard_uvbuffer);
+
+	glGenBuffers(1, &scoreboard_normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, scoreboard_normals.size() * sizeof(glm::vec3), &scoreboard_normals[0], GL_STATIC_DRAW);
 
 	auto lastTime = std::chrono::system_clock::now();
 
@@ -367,12 +486,15 @@ int main(void)
 	const float board_y_center = board_height * tetris_cube_size / 2;
 
 	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	// glm::vec3 up = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 center = glm::vec3(board_x_center, board_y_center, 0.0f);
+	// glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 position = glm::vec3(board_x_center, board_y_center, 80.0f);
 
 	ProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 205.0f);
 	// ViewMatrix = glm::lookAt(spline_points[i % spline_points.size()], center, up);
 	// ViewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, -25.0f), center, up);
-	ViewMatrix = glm::lookAt(glm::vec3(board_x_center, board_y_center, 80.0f), center, up);
+	ViewMatrix = glm::lookAt(position, center, up);
 
 	int i = 0;
 
@@ -398,6 +520,7 @@ int main(void)
 		lastTime = currentTime;
 
 		draw_tetris_board();
+		draw_scoreboard(tetris_game.get_score());
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -454,9 +577,12 @@ int main(void)
 	glDeleteBuffers(1, &vertexbuffer);
 	glDeleteBuffers(1, &uvbuffer);
 	glDeleteBuffers(1, &normalbuffer);
+	glDeleteBuffers(1, &scoreboard_vertexbuffer);
+	glDeleteBuffers(1, &scoreboard_uvbuffer);
+	glDeleteBuffers(1, &scoreboard_normalbuffer);
 	glDeleteBuffers(1, &camera_line_vertexbuffer);
 	glDeleteProgram(programID);
-	// glDeleteTextures(1, &Texture);
+	glDeleteTextures(1, &Texture);
 	glDeleteVertexArrays(1, &VertexArrayID);
 
 	// Close OpenGL window and terminate GLFW
