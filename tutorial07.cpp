@@ -47,7 +47,7 @@ GLuint scoreboard_uvbuffer;
 GLuint scoreboard_normalbuffer;
 
 float ambient_component = 0.1;
-float diffuse_component = 0.7;
+float diffuse_component = 0.85;
 int specular_exponent = 10;
 
 GLuint camera_line_vertexbuffer;
@@ -77,6 +77,10 @@ const int NUM_SPLINE_POINTS_BETWEEN_CONRTOL_POINTS = 100;
 extern const int board_height;
 extern const int board_width;
 
+extern const int upcoming_board_width;
+extern const int upcoming_board_lines_per_piece;
+extern const int num_upcoming_pieces_shown;
+
 TetrisGame tetris_game;
 
 bool soft_drop_is_active = false;
@@ -94,9 +98,8 @@ int soft_drop_counter = 0;
 int movement_counter = 0;
 int iteration_counter = 0;
 
-void draw_tetris_square(const int i, const int j)
+void draw_tetris_square()
 {
-	ModelMatrix = glm::translate(vec3(j * tetris_cube_size, i * tetris_cube_size, 0.0f));
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 	glUniformMatrix4fv(MVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
@@ -107,7 +110,6 @@ void draw_tetris_square(const int i, const int j)
 	glBindTexture(GL_TEXTURE_2D, Texture);
 	glUniform1i(TextureID, 0);
 
-	glUniform1i(piece_type_flag_id, (int)tetris_game.get_square(i, j));
 	glUniform1i(use_lighting_flag_id, 1);
 	glUniform3f(LightID, light_pos_x, light_pos_y, light_pos_z);
 
@@ -162,9 +164,42 @@ void draw_tetris_board()
 	{
 		for (int j = 0; j < board_width; j++)
 		{
-			if (tetris_game.get_square(i, j) != EMPTY)
+			auto square = tetris_game.get_square(i, j);
+			if (square != EMPTY)
 			{
-				draw_tetris_square(i, j);
+				glUniform1i(piece_type_flag_id, (int)square);
+				ModelMatrix = glm::translate(vec3(j * tetris_cube_size, i * tetris_cube_size, 0.0f));
+				draw_tetris_square();
+			}
+		}
+	}
+}
+
+// void draw_upcoming_tetris_piece_of_type(PieceType upcoming_piece_type, int piece_num) {
+// 	for (int i = 0; i < 4; i++) {
+// 		ModelMatrix = glm::translate(vec3(i*tetris_cube_size-board_width/4, board_height*3/4 - (piece_num * )));
+// 		draw_tetris_square();
+// 	}
+// }
+
+void draw_upcoming_pieces()
+{
+	for (int i = 0; i < num_upcoming_pieces_shown; i++)
+	{
+		for (int j = 0; j < upcoming_board_lines_per_piece; j++)
+		{
+			for (int k = 0; k < upcoming_board_width; k++)
+			{
+				auto square = tetris_game.get_upcoming_square(i, j, k);
+				if (square != EMPTY)
+				{
+					glUniform1i(piece_type_flag_id, (int)square);
+					// ModelMatrix = glm::translate(vec3(j * tetris_cube_size, i * tetris_cube_size, 0.0f));
+					float x = (k + board_width * 5 / 4) * tetris_cube_size;
+					float y = i * board_height * tetris_cube_size / num_upcoming_pieces_shown + j * tetris_cube_size;
+					ModelMatrix = glm::translate(vec3(x, y, 0.0f));
+					draw_tetris_square();
+				}
 			}
 		}
 	}
@@ -331,21 +366,25 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 		else if (key == GLFW_KEY_INSERT)
 		{
 			ambient_component += 0.01;
+			ambient_component = std::min(1.0f, ambient_component);
 			std::cout << ambient_component << "\n";
 		}
 		else if (key == GLFW_KEY_DELETE)
 		{
 			ambient_component -= 0.01;
+			ambient_component = std::max(0.0f, ambient_component);
 			std::cout << ambient_component << "\n";
 		}
 		else if (key == GLFW_KEY_HOME)
 		{
 			diffuse_component += 0.02;
+			diffuse_component = std::min(1.0f, diffuse_component);
 			std::cout << diffuse_component << "\n";
 		}
 		else if (key == GLFW_KEY_END)
 		{
 			diffuse_component -= 0.02;
+			diffuse_component = std::max(0.0f, diffuse_component);
 			std::cout << diffuse_component << "\n";
 		}
 		else if (key == GLFW_KEY_PAGE_UP)
@@ -520,6 +559,7 @@ int main(void)
 		lastTime = currentTime;
 
 		draw_tetris_board();
+		draw_upcoming_pieces();
 		draw_scoreboard(tetris_game.get_score());
 
 		// Swap buffers

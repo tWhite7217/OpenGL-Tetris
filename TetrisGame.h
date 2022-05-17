@@ -31,9 +31,15 @@ typedef enum
 const int board_height = 22;
 const int board_width = 10;
 
+const int upcoming_board_width = 4;
+const int upcoming_board_lines_per_piece = 3;
+const int num_upcoming_pieces_shown = 5;
+
 using PiecePositions = std::array<std::pair<int, int>, 4>;
 using BoardLine = std::array<BoardSquareColor, board_width>;
 using TetrisBoard = std::array<BoardLine, board_height>;
+using UpcomingPiece = std::array<std::array<BoardSquareColor, upcoming_board_width>, upcoming_board_lines_per_piece>;
+using UpcomingBoard = std::array<UpcomingPiece, num_upcoming_pieces_shown>;
 
 class TetrisGame
 {
@@ -41,6 +47,7 @@ public:
     TetrisGame();
     void iterate_time();
     BoardSquareColor get_square(const int, const int);
+    BoardSquareColor get_upcoming_square(const int, const int, const int);
     void hard_drop();
     void soft_drop();
     void handle_left_input();
@@ -48,6 +55,7 @@ public:
     void rotate_left();
     void rotate_right();
     int get_score();
+    // std::queue<PieceType> get_upcoming_pieces();
 
 private:
     enum class MovementDirection
@@ -157,7 +165,62 @@ private:
         {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
     }};
 
+    const UpcomingPiece upcoming_I = {{
+        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+        {{piece_colors.at(I), piece_colors.at(I), piece_colors.at(I), piece_colors.at(I)}},
+        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+    }};
+
+    const UpcomingPiece upcoming_O = {{
+        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+        {{EMPTY, piece_colors.at(O), piece_colors.at(O), EMPTY}},
+        {{EMPTY, piece_colors.at(O), piece_colors.at(O), EMPTY}},
+    }};
+
+    const UpcomingPiece upcoming_J = {{
+        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+        {{piece_colors.at(J), piece_colors.at(J), piece_colors.at(J), EMPTY}},
+        {{piece_colors.at(J), EMPTY, EMPTY, EMPTY}},
+    }};
+
+    const UpcomingPiece upcoming_L = {{
+        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+        {{piece_colors.at(L), piece_colors.at(L), piece_colors.at(L), EMPTY}},
+        {{EMPTY, EMPTY, piece_colors.at(L), EMPTY}},
+    }};
+
+    const UpcomingPiece upcoming_S = {{
+        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+        {{piece_colors.at(S), piece_colors.at(S), EMPTY, EMPTY}},
+        {{EMPTY, piece_colors.at(S), piece_colors.at(S), EMPTY}},
+    }};
+
+    const UpcomingPiece upcoming_Z = {{
+        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+        {{EMPTY, piece_colors.at(Z), piece_colors.at(Z), EMPTY}},
+        {{piece_colors.at(Z), piece_colors.at(Z), EMPTY, EMPTY}},
+    }};
+
+    const UpcomingPiece upcoming_T = {{
+        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+        {{piece_colors.at(T), piece_colors.at(T), piece_colors.at(T), EMPTY}},
+        {{EMPTY, piece_colors.at(T), EMPTY, EMPTY}},
+    }};
+
+    const std::unordered_map<PieceType, UpcomingPiece> upcoming_map = {
+        {I, upcoming_I},
+        {O, upcoming_O},
+        {J, upcoming_J},
+        {L, upcoming_L},
+        {S, upcoming_S},
+        {Z, upcoming_Z},
+        {T, upcoming_T},
+    };
+
+    UpcomingBoard upcoming_board;
+
     void initialize_game();
+    void update_upcoming_board();
     void add_seven_pieces_to_queue();
     bool falling_piece_can_move(const MovementDirection);
     std::function<bool(const int, const int)> get_checker_function(const MovementDirection);

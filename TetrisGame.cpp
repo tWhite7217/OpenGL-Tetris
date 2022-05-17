@@ -27,11 +27,27 @@ void TetrisGame::initialize_game()
 {
     add_seven_pieces_to_queue();
     add_next_piece_to_board();
+    update_upcoming_board();
 }
 
 BoardSquareColor TetrisGame::get_square(const int i, const int j)
 {
     return board[i][j];
+}
+
+BoardSquareColor TetrisGame::get_upcoming_square(const int i, const int j, const int k)
+{
+    return upcoming_board[i][j][k];
+}
+
+void TetrisGame::update_upcoming_board()
+{
+    auto queue_copy = upcoming_pieces;
+    for (int i = num_upcoming_pieces_shown - 1; i >= 0; i--)
+    {
+        upcoming_board[i] = upcoming_map.at(queue_copy.front());
+        queue_copy.pop();
+    }
 }
 
 void TetrisGame::add_seven_pieces_to_queue()
@@ -58,9 +74,10 @@ void TetrisGame::iterate_time()
     {
         clear_any_full_lines();
         add_next_piece_to_board();
+        update_upcoming_board();
     }
 
-    if (upcoming_pieces.empty())
+    if (upcoming_pieces.size() <= num_upcoming_pieces_shown)
     {
         add_seven_pieces_to_queue();
     }
