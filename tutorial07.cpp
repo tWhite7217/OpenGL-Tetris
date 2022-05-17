@@ -33,9 +33,16 @@ GLuint MVPMatrixID;
 GLuint MMatrixID;
 GLuint VMatrixID;
 GLuint LightID;
+GLuint ambient_id;
+GLuint diffuse_id;
+GLuint specular_id;
 GLuint vertexbuffer;
 GLuint uvbuffer;
 GLuint normalbuffer;
+
+float ambient_component = 0.1;
+float diffuse_component = 0.7;
+int specular_exponent = 10;
 
 GLuint camera_line_vertexbuffer;
 
@@ -91,6 +98,10 @@ void draw_tetris_square(const int i, const int j)
 
 	glUniform1i(piece_type_flag_id, (int)tetris_game.get_square(i, j));
 	glUniform3f(LightID, light_pos_x, light_pos_y, light_pos_z);
+
+	glUniform1f(ambient_id, ambient_component);
+	glUniform1f(diffuse_id, diffuse_component);
+	glUniform1i(specular_id, specular_exponent);
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -212,6 +223,36 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 			light_pos_z += light_pos_delta;
 			std::cout << light_pos_z << "\n";
 		}
+		else if (key == GLFW_KEY_INSERT)
+		{
+			ambient_component += 0.01;
+			std::cout << ambient_component << "\n";
+		}
+		else if (key == GLFW_KEY_DELETE)
+		{
+			ambient_component -= 0.01;
+			std::cout << ambient_component << "\n";
+		}
+		else if (key == GLFW_KEY_HOME)
+		{
+			diffuse_component += 0.02;
+			std::cout << diffuse_component << "\n";
+		}
+		else if (key == GLFW_KEY_END)
+		{
+			diffuse_component -= 0.02;
+			std::cout << diffuse_component << "\n";
+		}
+		else if (key == GLFW_KEY_PAGE_UP)
+		{
+			specular_exponent += 5;
+			std::cout << specular_exponent << "\n";
+		}
+		else if (key == GLFW_KEY_PAGE_DOWN)
+		{
+			specular_exponent = std::max(0, specular_exponent - 5);
+			std::cout << specular_exponent << "\n";
+		}
 	}
 	else if (action == GLFW_RELEASE)
 	{
@@ -295,6 +336,9 @@ int main(void)
 	MMatrixID = glGetUniformLocation(programID, "M");
 	VMatrixID = glGetUniformLocation(programID, "V");
 	LightID = glGetUniformLocation(programID, "lightPosition_worldspace");
+	ambient_id = glGetUniformLocation(programID, "ambient_component");
+	diffuse_id = glGetUniformLocation(programID, "diffuse_component");
+	specular_id = glGetUniformLocation(programID, "specular_exponent");
 
 	// Load the texture
 	// Texture = loadDDS("texture.DDS");

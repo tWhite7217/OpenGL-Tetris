@@ -13,6 +13,9 @@ out vec3 color;
 // Values that stay constant for the whole mesh.
 uniform sampler2D myTextureSampler;
 uniform int piece_type;
+uniform float ambient_component;
+uniform float diffuse_component;
+uniform int specular_exponent;
 
 vec3 draw_with_lighting(vec3 base_color) {
 	vec3 n = normalize(normal_cameraspace);
@@ -23,11 +26,9 @@ vec3 draw_with_lighting(vec3 base_color) {
 	vec3 R = reflect(l,n);
 	float cosAlpha = clamp( dot( E,R ), 0,1 );
 
-	vec3 ambient = base_color * 0.1f;
-	vec3 diffuse = base_color * cosTheta * 0.8;
-	// vec3 diffuse = vec3(0);
-	vec3 specular = base_color * pow(cosAlpha, 50);
-	// vec3 specular = vec3(0);
+	vec3 ambient = base_color * ambient_component;
+	vec3 diffuse = base_color * cosTheta * diffuse_component;
+	vec3 specular = base_color * pow(cosAlpha, specular_exponent);
 
 	return ambient + diffuse + specular;
 }
