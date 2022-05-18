@@ -106,6 +106,33 @@ int soft_drop_counter = 0;
 int movement_counter = 0;
 int iteration_counter = 0;
 
+const float board_width_gl = board_width * tetris_cube_size;
+const float board_height_gl = board_height * tetris_cube_size;
+const float board_x_center = board_width_gl / 2;
+const float board_y_center = board_height_gl / 2;
+
+const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+const glm::vec3 center = glm::vec3(board_x_center, board_y_center, 0.0f);
+
+const auto time_between_camera_positions = 1500ms;
+auto time_since_camera_change_started = 0ms;
+
+const std::array<glm::vec3, 9> camera_positions = {{
+	glm::vec3(0.0f, board_height_gl, 50.0f),
+	glm::vec3(board_x_center, board_height_gl, 65.0f),
+	glm::vec3(board_width_gl, board_height_gl, 90.0f),
+	glm::vec3(0.0f, board_y_center, 100.f),
+	glm::vec3(board_x_center, board_y_center, 80.0f),
+	glm::vec3(board_width_gl, board_y_center, 60.f),
+	glm::vec3(0.0f, 0.0f, 70.0f),
+	glm::vec3(board_x_center, 0.0f, 120.0f),
+	glm::vec3(board_width_gl, 0.0f, 80.0f),
+}};
+
+glm::vec3 position = camera_positions[4];
+glm::vec3 original_position = camera_positions[4];
+glm::vec3 destination_position = camera_positions[4];
+
 void draw_tetris_square()
 {
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
@@ -428,6 +455,60 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 			specular_exponent = std::max(1, specular_exponent - 5);
 			std::cout << specular_exponent << "\n";
 		}
+		else if (key == GLFW_KEY_Y)
+		{
+			original_position = position;
+			destination_position = camera_positions[0];
+			time_since_camera_change_started = 0ms;
+		}
+		else if (key == GLFW_KEY_U)
+		{
+			original_position = position;
+			destination_position = camera_positions[1];
+			time_since_camera_change_started = 0ms;
+		}
+		else if (key == GLFW_KEY_I)
+		{
+			original_position = position;
+			destination_position = camera_positions[2];
+			time_since_camera_change_started = 0ms;
+		}
+		else if (key == GLFW_KEY_H)
+		{
+			original_position = position;
+			destination_position = camera_positions[3];
+			time_since_camera_change_started = 0ms;
+		}
+		else if (key == GLFW_KEY_J)
+		{
+			original_position = position;
+			destination_position = camera_positions[4];
+			time_since_camera_change_started = 0ms;
+		}
+		else if (key == GLFW_KEY_K)
+		{
+			original_position = position;
+			destination_position = camera_positions[5];
+			time_since_camera_change_started = 0ms;
+		}
+		else if (key == GLFW_KEY_B)
+		{
+			original_position = position;
+			destination_position = camera_positions[6];
+			time_since_camera_change_started = 0ms;
+		}
+		else if (key == GLFW_KEY_N)
+		{
+			original_position = position;
+			destination_position = camera_positions[7];
+			time_since_camera_change_started = 0ms;
+		}
+		else if (key == GLFW_KEY_M)
+		{
+			original_position = position;
+			destination_position = camera_positions[8];
+			time_since_camera_change_started = 0ms;
+		}
 	}
 	else if (action == GLFW_RELEASE)
 	{
@@ -561,19 +642,9 @@ int main(void)
 
 	auto lastTime = std::chrono::system_clock::now();
 
-	const float board_x_center = board_width * tetris_cube_size / 2;
-	const float board_y_center = board_height * tetris_cube_size / 2;
-
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-	// glm::vec3 up = glm::vec3(0.0f, 0.0f, -1.0f);
-	glm::vec3 center = glm::vec3(board_x_center, board_y_center, 0.0f);
-	// glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 position = glm::vec3(board_x_center, board_y_center, 80.0f);
-
 	ProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 205.0f);
 	// ViewMatrix = glm::lookAt(spline_points[i % spline_points.size()], center, up);
 	// ViewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, -25.0f), center, up);
-	ViewMatrix = glm::lookAt(position, center, up);
 
 	int i = 0;
 
@@ -592,6 +663,8 @@ int main(void)
 	float y_offset_fraction;
 	const float y_offset_max = 5.0f;
 
+	float position_fraction;
+
 	do
 	{
 		// Clear the screen
@@ -600,10 +673,19 @@ int main(void)
 		// Use our shader
 		glUseProgram(programID);
 
+		ViewMatrix = glm::lookAt(position, center, up);
+
 		auto currentTime = std::chrono::system_clock::now();
 		auto deltaTime = currentTime - lastTime;
 		auto deltaTimeInMS = std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime);
 		lastTime = currentTime;
+
+		if (time_since_camera_change_started < time_between_camera_positions)
+		{
+			time_since_camera_change_started += deltaTimeInMS;
+			position_fraction = float(time_since_camera_change_started.count()) / float(time_between_camera_positions.count());
+			position = (1.0f - position_fraction) * original_position + position_fraction * destination_position;
+		}
 
 		y_offset_timer += deltaTimeInMS;
 
