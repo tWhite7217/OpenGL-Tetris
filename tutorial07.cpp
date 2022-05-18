@@ -28,6 +28,14 @@ using namespace glm;
 using namespace std::chrono_literals;
 
 GLuint Texture;
+GLuint light_blue_texture;
+GLuint dark_blue_texture;
+GLuint yellow_texture;
+GLuint orange_texture;
+GLuint red_texture;
+GLuint purple_texture;
+GLuint green_texture;
+
 GLuint TextureID;
 GLuint MVPMatrixID;
 GLuint MMatrixID;
@@ -106,16 +114,13 @@ void draw_tetris_square()
 	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 	glUniformMatrix4fv(VMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, Texture);
-	glUniform1i(TextureID, 0);
-
-	glUniform1i(use_lighting_flag_id, 1);
 	glUniform3f(LightID, light_pos_x, light_pos_y, light_pos_z);
 
 	glUniform1f(ambient_id, ambient_component);
 	glUniform1f(diffuse_id, diffuse_component);
 	glUniform1i(specular_id, specular_exponent);
+
+	glUniform1i(use_lighting_flag_id, 1);
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -182,7 +187,7 @@ void draw_tetris_board()
 // 	}
 // }
 
-void draw_upcoming_pieces()
+void draw_upcoming_pieces(float y_offset)
 {
 	for (int i = 0; i < num_upcoming_pieces_shown; i++)
 	{
@@ -193,10 +198,36 @@ void draw_upcoming_pieces()
 				auto square = tetris_game.get_upcoming_square(i, j, k);
 				if (square != EMPTY)
 				{
-					glUniform1i(piece_type_flag_id, (int)square);
+					glActiveTexture(GL_TEXTURE0);
+					switch (square)
+					{
+					case LIGHT_BLUE:
+						glBindTexture(GL_TEXTURE_2D, light_blue_texture);
+						break;
+					case DARK_BLUE:
+						glBindTexture(GL_TEXTURE_2D, dark_blue_texture);
+						break;
+					case GREEN:
+						glBindTexture(GL_TEXTURE_2D, green_texture);
+						break;
+					case YELLOW:
+						glBindTexture(GL_TEXTURE_2D, yellow_texture);
+						break;
+					case ORANGE:
+						glBindTexture(GL_TEXTURE_2D, orange_texture);
+						break;
+					case RED:
+						glBindTexture(GL_TEXTURE_2D, red_texture);
+						break;
+					case MAGENTA:
+						glBindTexture(GL_TEXTURE_2D, purple_texture);
+						break;
+					}
+					glUniform1i(TextureID, 0);
+					glUniform1i(piece_type_flag_id, -1);
 					// ModelMatrix = glm::translate(vec3(j * tetris_cube_size, i * tetris_cube_size, 0.0f));
 					float x = (k + board_width * 5 / 4) * tetris_cube_size;
-					float y = i * board_height * tetris_cube_size / num_upcoming_pieces_shown + j * tetris_cube_size;
+					float y = board_height * tetris_cube_size - (num_upcoming_pieces_shown - i - 1) * upcoming_board_lines_per_piece * tetris_cube_size + j * tetris_cube_size - y_offset;
 					ModelMatrix = glm::translate(vec3(x, y, 0.0f));
 					draw_tetris_square();
 				}
@@ -389,12 +420,12 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 		else if (key == GLFW_KEY_PAGE_UP)
 		{
-			specular_exponent += 5;
+			specular_exponent += 6;
 			std::cout << specular_exponent << "\n";
 		}
 		else if (key == GLFW_KEY_PAGE_DOWN)
 		{
-			specular_exponent = std::max(0, specular_exponent - 5);
+			specular_exponent = std::max(1, specular_exponent - 5);
 			std::cout << specular_exponent << "\n";
 		}
 	}
@@ -487,13 +518,22 @@ int main(void)
 
 	// Load the texture
 	Texture = loadDDS("SSD_Numbers.DDS");
+	light_blue_texture = loadDDS("light_blue_texture.DDS");
+	dark_blue_texture = loadDDS("dark_blue_texture.DDS");
+	yellow_texture = loadDDS("yellow_texture.DDS");
+	orange_texture = loadDDS("orange_texture.DDS");
+	red_texture = loadDDS("red_texture.DDS");
+	purple_texture = loadDDS("purple_texture.DDS");
+	green_texture = loadDDS("green_texture.DDS");
 
 	// Get a handle for our "myTextureSampler" uniform
-	TextureID = glGetUniformLocation(programID, "SSD_Texture");
+	TextureID = glGetUniformLocation(programID, "textureSampler");
 	piece_type_flag_id = glGetUniformLocation(programID, "piece_type");
 	use_lighting_flag_id = glGetUniformLocation(programID, "use_lighting");
 
-	loadOBJ("tetris_cube.obj", vertices, uvs, normals);
+	// loadOBJ("tetris_cube.obj", vertices, uvs, normals);
+	loadOBJ("tetris_cube_more_beveled.obj", vertices, uvs, normals);
+	// loadOBJ("tetris_cube_even_more_beveled.obj", vertices, uvs, normals);
 
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -545,6 +585,13 @@ int main(void)
 	auto sub_iteration_time = iteration_time / sub_iterations_per_iteration;
 	auto time_since_last_sub_iteration = 0ms;
 
+	float upcoming_piece_y_offset = 0;
+	const auto y_offset_period = 5000ms;
+	auto y_offset_timer = 0ms;
+	bool y_offset_is_increasing = true;
+	float y_offset_fraction;
+	const float y_offset_max = 5.0f;
+
 	do
 	{
 		// Clear the screen
@@ -558,8 +605,27 @@ int main(void)
 		auto deltaTimeInMS = std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime);
 		lastTime = currentTime;
 
+		y_offset_timer += deltaTimeInMS;
+
+		if (y_offset_timer > y_offset_period)
+		{
+			y_offset_timer -= y_offset_period;
+			y_offset_is_increasing = !y_offset_is_increasing;
+		}
+
+		y_offset_fraction = float(y_offset_timer.count()) / float(y_offset_period.count());
+
+		if (y_offset_is_increasing)
+		{
+			upcoming_piece_y_offset = y_offset_fraction * y_offset_max;
+		}
+		else
+		{
+			upcoming_piece_y_offset = y_offset_max - y_offset_fraction * y_offset_max;
+		}
+
 		draw_tetris_board();
-		draw_upcoming_pieces();
+		draw_upcoming_pieces(upcoming_piece_y_offset);
 		draw_scoreboard(tetris_game.get_score());
 
 		// Swap buffers
@@ -622,6 +688,13 @@ int main(void)
 	glDeleteBuffers(1, &scoreboard_normalbuffer);
 	glDeleteBuffers(1, &camera_line_vertexbuffer);
 	glDeleteProgram(programID);
+	glDeleteTextures(1, &light_blue_texture);
+	glDeleteTextures(1, &dark_blue_texture);
+	glDeleteTextures(1, &yellow_texture);
+	glDeleteTextures(1, &orange_texture);
+	glDeleteTextures(1, &red_texture);
+	glDeleteTextures(1, &purple_texture);
+	glDeleteTextures(1, &green_texture);
 	glDeleteTextures(1, &Texture);
 	glDeleteVertexArrays(1, &VertexArrayID);
 

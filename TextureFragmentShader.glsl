@@ -11,7 +11,7 @@ in vec3 lightPosition_cameraspace;
 out vec3 color;
 
 // Values that stay constant for the whole mesh.
-uniform sampler2D SSD_Texture;
+uniform sampler2D textureSampler;
 uniform int piece_type;
 uniform float ambient_component;
 uniform float diffuse_component;
@@ -38,7 +38,9 @@ void main(){
 	vec3 base_color;
 
 	if (use_lighting) {
-		if (piece_type == 0) {
+		if (piece_type == -1) {
+			base_color = texture(textureSampler, UV).rgb;
+		} else if (piece_type == 0) {
 			base_color = vec3(0.1f, 1.0f, 1.0f);
 		} else if (piece_type == 1) {
 			base_color = vec3(0.0f, 0.12f, 0.7f);
@@ -56,6 +58,6 @@ void main(){
 		color = draw_with_lighting(base_color);
 	} else {
 		// color = vec3(1.0f);
-		color = texture(SSD_Texture, UV).rgb;
+		color = texture(textureSampler, UV).rgb;
 	}
 }
