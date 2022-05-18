@@ -243,13 +243,57 @@ void draw_held_tetris_piece()
 	// ModelMatrix = glm::scale(vec3(10.0f));
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
+	GLuint current_texture;
+	GLuint current_vertexbuffer;
+	GLuint current_uvbuffer;
+
+	auto held_piece_type = tetris_game.get_held_piece();
+	switch (held_piece_type)
+	{
+	case I:
+		current_texture = I_billboard_texture;
+		current_vertexbuffer = I_hold_vertexbuffer;
+		current_uvbuffer = I_hold_uvbuffer;
+		break;
+	case O:
+		current_texture = O_billboard_texture;
+		current_vertexbuffer = O_hold_vertexbuffer;
+		current_uvbuffer = O_hold_uvbuffer;
+		break;
+	default:
+
+		switch (held_piece_type)
+		{
+		case J:
+			current_texture = J_billboard_texture;
+			break;
+		case L:
+			current_texture = L_billboard_texture;
+			break;
+		case S:
+			current_texture = S_billboard_texture;
+			break;
+		case Z:
+			current_texture = Z_billboard_texture;
+			break;
+		case T:
+			current_texture = T_billboard_texture;
+			break;
+		default:
+			break;
+		}
+		current_vertexbuffer = J_L_S_Z_T_hold_vertexbuffer;
+		current_uvbuffer = J_L_S_Z_T_hold_uvbuffer;
+		break;
+	}
+
 	glUniformMatrix4fv(MVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 	glUniformMatrix4fv(VMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 	glUniformMatrix4fv(PMatrixID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, I_billboard_texture);
+	glBindTexture(GL_TEXTURE_2D, current_texture);
 	glUniform1i(TextureID, 0);
 
 	glUniform1i(piece_type_flag_id, -1);
@@ -257,7 +301,7 @@ void draw_held_tetris_piece()
 	glUniform1i(use_mvp_flag_id, 1);
 
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, I_hold_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, current_vertexbuffer);
 	glVertexAttribPointer(
 		0,		  // attribute
 		3,		  // size
@@ -268,7 +312,7 @@ void draw_held_tetris_piece()
 	);
 
 	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, I_hold_uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, current_uvbuffer);
 	glVertexAttribPointer(
 		1,		  // attribute
 		2,		  // size
@@ -833,7 +877,10 @@ int main(void)
 		draw_tetris_board();
 		draw_upcoming_pieces(upcoming_piece_y_offset);
 		draw_scoreboard(tetris_game.get_score());
-		draw_held_tetris_piece();
+		if (tetris_game.get_if_a_piece_is_held())
+		{
+			draw_held_tetris_piece();
+		}
 
 		// Swap buffers
 		glfwSwapBuffers(window);

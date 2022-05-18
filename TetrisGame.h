@@ -56,6 +56,8 @@ public:
     void rotate_left();
     void rotate_right();
     int get_score();
+    PieceType get_held_piece();
+    bool get_if_a_piece_is_held();
     // std::queue<PieceType> get_upcoming_pieces();
 
 private:

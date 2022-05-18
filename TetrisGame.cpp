@@ -23,6 +23,16 @@ int TetrisGame::get_score()
     return score;
 }
 
+PieceType TetrisGame::get_held_piece()
+{
+    return held_piece;
+}
+
+bool TetrisGame::get_if_a_piece_is_held()
+{
+    return a_piece_is_held;
+}
+
 void TetrisGame::initialize_game()
 {
     add_seven_pieces_to_queue();
