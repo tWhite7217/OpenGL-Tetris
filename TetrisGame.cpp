@@ -28,7 +28,7 @@ PieceType TetrisGame::get_held_piece()
     return held_piece;
 }
 
-bool TetrisGame::get_if_a_piece_is_held()
+bool TetrisGame::get_whether_a_piece_is_held()
 {
     return a_piece_is_held;
 }

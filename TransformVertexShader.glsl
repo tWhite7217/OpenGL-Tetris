@@ -4,6 +4,7 @@
 layout(location = 0) in vec3 vertexPosition_modelspace;
 layout(location = 1) in vec2 vertexUV;
 layout(location = 2) in vec3 normal_modelspace;
+layout(location = 3) in vec3 square_vertices;
 
 // Output data ; will be interpolated for each fragment.
 out vec2 UV;
@@ -20,6 +21,11 @@ uniform mat4 MVP;
 uniform mat4 M;
 uniform mat4 V;
 uniform mat4 P;
+
+uniform vec3 billboard_center;
+uniform vec2 billboard_size;
+uniform vec3 camera_up_worldspace;
+uniform vec3 camera_right_worldspace;
 
 void main(){
 
@@ -39,7 +45,13 @@ void main(){
 		// lightDirection_cameraspace = lightPosition_cameraspace - vertexPosition_cameraspace;
 	} else {
 		if (use_mvp) {
-			gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
+			vec3 vertexPosition_worldspace =
+				billboard_center
+				+ camera_right_worldspace * square_vertices.x * billboard_size.x
+				+ camera_up_worldspace * square_vertices.y * billboard_size.y;
+			gl_Position = P * V * vec4(vertexPosition_worldspace, 1);
+			// gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
+
 		} else {
 			gl_Position = M * vec4(vertexPosition_modelspace,1);
 		}

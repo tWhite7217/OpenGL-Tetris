@@ -54,6 +54,11 @@ GLuint ambient_id;
 GLuint diffuse_id;
 GLuint specular_id;
 
+GLuint billboard_center_id;
+GLuint billboard_size_id;
+GLuint camera_up_id;
+GLuint camera_right_id;
+
 GLuint vertexbuffer;
 GLuint uvbuffer;
 GLuint normalbuffer;
@@ -61,6 +66,8 @@ GLuint normalbuffer;
 GLuint scoreboard_vertexbuffer;
 GLuint scoreboard_uvbuffer;
 GLuint scoreboard_normalbuffer;
+
+GLuint square_vertexbuffer;
 
 GLuint I_hold_vertexbuffer;
 GLuint I_hold_uvbuffer;
@@ -99,6 +106,13 @@ std::vector<glm::vec3> O_hold_normals;
 std::vector<glm::vec3> J_L_S_Z_T_hold_vertices;
 std::vector<glm::vec2> J_L_S_Z_T_hold_uvs;
 std::vector<glm::vec3> J_L_S_Z_T_hold_normals;
+
+const std::vector<glm::vec3> square_vertices = {
+	glm::vec3(-0.5f, -0.5f, 0.0f),
+	glm::vec3(0.5f, -0.5f, 0.0f),
+	glm::vec3(-0.5f, 0.5f, 0.0f),
+	glm::vec3(0.5f, 0.5f, 0.0f),
+};
 
 glm::mat4 ModelMatrix;
 glm::mat4 ViewMatrix;
@@ -238,11 +252,16 @@ void draw_tetris_board()
 
 void draw_held_tetris_piece()
 {
-	ModelMatrix = glm::translate(glm::vec3(-8.0f, board_height_gl - 5.0f, 0.0f)) * glm::rotate(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::scale(glm::vec3(2.0f));
+	glm::vec3 billboard_center = glm::vec3(-8.0f, board_height_gl - 5.0f, 0.0f);
+	ModelMatrix = glm::translate(billboard_center) * glm::rotate(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::scale(glm::vec3(2.0f));
 	// ModelMatrix = glm::translate(vec3(0.0f));
 	// ModelMatrix = glm::scale(vec3(10.0f));
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
+	glm::vec3 camera_right_worldspace = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
+	glm::vec3 camera_up_worldspace = glm::vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
+
+	std::vector<glm::vec3> current_vertices;
 	GLuint current_texture;
 	GLuint current_vertexbuffer;
 	GLuint current_uvbuffer;
@@ -251,17 +270,21 @@ void draw_held_tetris_piece()
 	switch (held_piece_type)
 	{
 	case I:
+		current_vertices = I_hold_vertices;
 		current_texture = I_billboard_texture;
 		current_vertexbuffer = I_hold_vertexbuffer;
 		current_uvbuffer = I_hold_uvbuffer;
 		break;
 	case O:
+		current_vertices = O_hold_vertices;
 		current_texture = O_billboard_texture;
 		current_vertexbuffer = O_hold_vertexbuffer;
 		current_uvbuffer = O_hold_uvbuffer;
 		break;
 	default:
-
+		current_vertices = J_L_S_Z_T_hold_vertices;
+		current_vertexbuffer = J_L_S_Z_T_hold_vertexbuffer;
+		current_uvbuffer = J_L_S_Z_T_hold_uvbuffer;
 		switch (held_piece_type)
 		{
 		case J:
@@ -282,10 +305,17 @@ void draw_held_tetris_piece()
 		default:
 			break;
 		}
-		current_vertexbuffer = J_L_S_Z_T_hold_vertexbuffer;
-		current_uvbuffer = J_L_S_Z_T_hold_uvbuffer;
 		break;
 	}
+
+	glm::vec2 billboard_size;
+	billboard_size.x = current_vertices[0].x - current_vertices[1].x;
+	billboard_size.y = current_vertices[2].z - current_vertices[1].z;
+
+	glUniform3f(billboard_center_id, billboard_center.x, billboard_center.y, billboard_center.z);
+	glUniform2f(billboard_size_id, billboard_size.x, billboard_size.y);
+	glUniform3f(camera_up_id, camera_up_worldspace.x, camera_up_worldspace.y, camera_up_worldspace.z);
+	glUniform3f(camera_right_id, camera_right_worldspace.x, camera_right_worldspace.y, camera_right_worldspace.z);
 
 	glUniformMatrix4fv(MVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
@@ -322,10 +352,22 @@ void draw_held_tetris_piece()
 		(void *)0 // array buffer offset
 	);
 
+	glEnableVertexAttribArray(3);
+	glBindBuffer(GL_ARRAY_BUFFER, square_vertexbuffer);
+	glVertexAttribPointer(
+		3,		  // attribute
+		3,		  // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		0,		  // stride
+		(void *)0 // array buffer offset
+	);
+
 	glDrawArrays(GL_TRIANGLES, 0, I_hold_vertices.size());
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(3);
 }
 
 void draw_upcoming_pieces(float y_offset)
@@ -714,6 +756,10 @@ int main(void)
 	ambient_id = glGetUniformLocation(programID, "ambient_component");
 	diffuse_id = glGetUniformLocation(programID, "diffuse_component");
 	specular_id = glGetUniformLocation(programID, "specular_exponent");
+	billboard_center_id = glGetUniformLocation(programID, "billboard_center");
+	billboard_size_id = glGetUniformLocation(programID, "billboard_size");
+	camera_up_id = glGetUniformLocation(programID, "camera_up_worldspace");
+	camera_right_id = glGetUniformLocation(programID, "camera_right_worldspace");
 
 	// Load the texture
 	Texture = loadDDS("SSD_Numbers.DDS");
@@ -808,6 +854,10 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_normalbuffer);
 	glBufferData(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_normals.size() * sizeof(glm::vec3), &J_L_S_Z_T_hold_normals[0], GL_STATIC_DRAW);
 
+	glGenBuffers(1, &square_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, square_vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, square_vertices.size() * sizeof(glm::vec3), &square_vertices[0], GL_STATIC_DRAW);
+
 	auto lastTime = std::chrono::system_clock::now();
 
 	ProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 205.0f);
@@ -877,7 +927,7 @@ int main(void)
 		draw_tetris_board();
 		draw_upcoming_pieces(upcoming_piece_y_offset);
 		draw_scoreboard(tetris_game.get_score());
-		if (tetris_game.get_if_a_piece_is_held())
+		if (tetris_game.get_whether_a_piece_is_held())
 		{
 			draw_held_tetris_piece();
 		}
@@ -941,6 +991,7 @@ int main(void)
 	glDeleteBuffers(1, &scoreboard_uvbuffer);
 	glDeleteBuffers(1, &scoreboard_normalbuffer);
 	glDeleteBuffers(1, &camera_line_vertexbuffer);
+	glDeleteBuffers(1, &square_vertexbuffer);
 	glDeleteProgram(programID);
 	glDeleteTextures(1, &light_blue_texture);
 	glDeleteTextures(1, &dark_blue_texture);
