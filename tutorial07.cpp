@@ -579,6 +579,10 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 			destination_position = camera_positions[8];
 			time_since_camera_change_started = 0ms;
 		}
+		else if (key == GLFW_KEY_LEFT_SHIFT)
+		{
+			tetris_game.hold_piece();
+		}
 	}
 	else if (action == GLFW_RELEASE)
 	{

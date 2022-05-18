@@ -50,6 +50,7 @@ public:
     BoardSquareColor get_upcoming_square(const int, const int, const int);
     void hard_drop();
     void soft_drop();
+    void hold_piece();
     void handle_left_input();
     void handle_right_input();
     void rotate_left();
@@ -97,6 +98,9 @@ private:
     } falling_piece;
 
     int score = 0;
+    bool a_piece_is_held = false;
+    bool a_piece_was_held_this_turn = false;
+    PieceType held_piece;
     std::queue<PieceType> upcoming_pieces;
     std::array<PieceType, 7> seven_bag = {I, J, L, O, S, Z, T};
 
@@ -231,6 +235,7 @@ private:
     void remove_lines(std::vector<int>);
     void add_empty_lines(int);
     void add_next_piece_to_board();
+    void add_piece_to_board(PieceType);
     void initialize_falling_piece_positions(const PieceType);
     void move_falling_piece_down();
     void move_falling_piece_left();

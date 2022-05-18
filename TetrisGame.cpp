@@ -27,7 +27,6 @@ void TetrisGame::initialize_game()
 {
     add_seven_pieces_to_queue();
     add_next_piece_to_board();
-    update_upcoming_board();
 }
 
 BoardSquareColor TetrisGame::get_square(const int i, const int j)
@@ -38,6 +37,27 @@ BoardSquareColor TetrisGame::get_square(const int i, const int j)
 BoardSquareColor TetrisGame::get_upcoming_square(const int i, const int j, const int k)
 {
     return upcoming_board[i][j][k];
+}
+
+void TetrisGame::hold_piece()
+{
+    if (!a_piece_was_held_this_turn)
+    {
+        a_piece_was_held_this_turn = true;
+        remove_falling_piece_from_board();
+        auto prev_piece_type = falling_piece.type;
+        if (a_piece_is_held)
+        {
+            // std::cout << "here\n";
+            add_piece_to_board(held_piece);
+        }
+        else
+        {
+            add_next_piece_to_board();
+            a_piece_is_held = true;
+        }
+        held_piece = prev_piece_type;
+    }
 }
 
 void TetrisGame::update_upcoming_board()
@@ -74,7 +94,7 @@ void TetrisGame::iterate_time()
     {
         clear_any_full_lines();
         add_next_piece_to_board();
-        update_upcoming_board();
+        a_piece_was_held_this_turn = false;
     }
 
     if (upcoming_pieces.size() <= num_upcoming_pieces_shown)
@@ -189,10 +209,16 @@ void TetrisGame::add_empty_lines(int num_lines)
 void TetrisGame::add_next_piece_to_board()
 {
     PieceType next_piece_type = top_and_pop(upcoming_pieces);
-    BoardSquareColor piece_color = piece_colors.at(next_piece_type);
-    falling_piece.type = next_piece_type;
+    add_piece_to_board(next_piece_type);
+    update_upcoming_board();
+}
+
+void TetrisGame::add_piece_to_board(PieceType type)
+{
+    BoardSquareColor piece_color = piece_colors.at(type);
+    falling_piece.type = type;
     falling_piece.rotation_state = RotationState::_0;
-    initialize_falling_piece_positions(next_piece_type);
+    initialize_falling_piece_positions(type);
     set_positions_to_color(falling_piece.positions, piece_color);
 }
 
