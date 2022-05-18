@@ -67,8 +67,6 @@ GLuint scoreboard_vertexbuffer;
 GLuint scoreboard_uvbuffer;
 GLuint scoreboard_normalbuffer;
 
-GLuint square_vertexbuffer;
-
 GLuint I_hold_vertexbuffer;
 GLuint I_hold_uvbuffer;
 GLuint I_hold_normalbuffer;
@@ -106,13 +104,6 @@ std::vector<glm::vec3> O_hold_normals;
 std::vector<glm::vec3> J_L_S_Z_T_hold_vertices;
 std::vector<glm::vec2> J_L_S_Z_T_hold_uvs;
 std::vector<glm::vec3> J_L_S_Z_T_hold_normals;
-
-const std::vector<glm::vec3> square_vertices = {
-	glm::vec3(-0.5f, -0.5f, 0.0f),
-	glm::vec3(0.5f, -0.5f, 0.0f),
-	glm::vec3(-0.5f, 0.5f, 0.0f),
-	glm::vec3(0.5f, 0.5f, 0.0f),
-};
 
 glm::mat4 ModelMatrix;
 glm::mat4 ViewMatrix;
@@ -253,9 +244,7 @@ void draw_tetris_board()
 void draw_held_tetris_piece()
 {
 	glm::vec3 billboard_center = glm::vec3(-8.0f, board_height_gl - 5.0f, 0.0f);
-	ModelMatrix = glm::translate(billboard_center) * glm::rotate(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::scale(glm::vec3(2.0f));
-	// ModelMatrix = glm::translate(vec3(0.0f));
-	// ModelMatrix = glm::scale(vec3(10.0f));
+	ModelMatrix = glm::rotate(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 	glm::vec3 camera_right_worldspace = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
@@ -266,22 +255,27 @@ void draw_held_tetris_piece()
 	GLuint current_vertexbuffer;
 	GLuint current_uvbuffer;
 
+	glm::vec2 billboard_size;
+
 	auto held_piece_type = tetris_game.get_held_piece();
 	switch (held_piece_type)
 	{
 	case I:
+		billboard_size = glm::vec2(2, 1.5);
 		current_vertices = I_hold_vertices;
 		current_texture = I_billboard_texture;
 		current_vertexbuffer = I_hold_vertexbuffer;
 		current_uvbuffer = I_hold_uvbuffer;
 		break;
 	case O:
+		billboard_size = glm::vec2(3, 3);
 		current_vertices = O_hold_vertices;
 		current_texture = O_billboard_texture;
 		current_vertexbuffer = O_hold_vertexbuffer;
 		current_uvbuffer = O_hold_uvbuffer;
 		break;
 	default:
+		billboard_size = glm::vec2(3.6, 3);
 		current_vertices = J_L_S_Z_T_hold_vertices;
 		current_vertexbuffer = J_L_S_Z_T_hold_vertexbuffer;
 		current_uvbuffer = J_L_S_Z_T_hold_uvbuffer;
@@ -307,10 +301,6 @@ void draw_held_tetris_piece()
 		}
 		break;
 	}
-
-	glm::vec2 billboard_size;
-	billboard_size.x = current_vertices[0].x - current_vertices[1].x;
-	billboard_size.y = current_vertices[2].z - current_vertices[1].z;
 
 	glUniform3f(billboard_center_id, billboard_center.x, billboard_center.y, billboard_center.z);
 	glUniform2f(billboard_size_id, billboard_size.x, billboard_size.y);
@@ -352,18 +342,7 @@ void draw_held_tetris_piece()
 		(void *)0 // array buffer offset
 	);
 
-	glEnableVertexAttribArray(3);
-	glBindBuffer(GL_ARRAY_BUFFER, square_vertexbuffer);
-	glVertexAttribPointer(
-		3,		  // attribute
-		3,		  // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		0,		  // stride
-		(void *)0 // array buffer offset
-	);
-
-	glDrawArrays(GL_TRIANGLES, 0, I_hold_vertices.size());
+	glDrawArrays(GL_TRIANGLES, 0, current_vertices.size());
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
@@ -435,6 +414,7 @@ void draw_scoreboard_digit(int digit_place, int digit_value)
 
 	glUniform1i(piece_type_flag_id, -1);
 	glUniform1i(use_lighting_flag_id, 0);
+	glUniform1i(use_mvp_flag_id, 0);
 
 	std::vector<glm::vec2> current_uvs;
 	int displacement_x;
@@ -610,6 +590,12 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 		{
 			specular_exponent = std::max(1, specular_exponent - 5);
 			std::cout << specular_exponent << "\n";
+		}
+		else if (key == GLFW_KEY_G)
+		{
+			original_position = position;
+			destination_position = vec3(-70.0f, 20.0f, 0.0f);
+			time_since_camera_change_started = 0ms;
 		}
 		else if (key == GLFW_KEY_Y)
 		{
@@ -854,10 +840,6 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_normalbuffer);
 	glBufferData(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_normals.size() * sizeof(glm::vec3), &J_L_S_Z_T_hold_normals[0], GL_STATIC_DRAW);
 
-	glGenBuffers(1, &square_vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, square_vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, square_vertices.size() * sizeof(glm::vec3), &square_vertices[0], GL_STATIC_DRAW);
-
 	auto lastTime = std::chrono::system_clock::now();
 
 	ProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 205.0f);
@@ -991,7 +973,6 @@ int main(void)
 	glDeleteBuffers(1, &scoreboard_uvbuffer);
 	glDeleteBuffers(1, &scoreboard_normalbuffer);
 	glDeleteBuffers(1, &camera_line_vertexbuffer);
-	glDeleteBuffers(1, &square_vertexbuffer);
 	glDeleteProgram(programID);
 	glDeleteTextures(1, &light_blue_texture);
 	glDeleteTextures(1, &dark_blue_texture);
