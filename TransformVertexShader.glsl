@@ -15,6 +15,7 @@ out vec3 lightPosition_cameraspace;
 // Values that stay constant for the whole mesh.
 uniform vec3 lightPosition_worldspace;
 uniform bool use_lighting;
+uniform bool use_mvp;
 uniform mat4 MVP;
 uniform mat4 M;
 uniform mat4 V;
@@ -37,6 +38,10 @@ void main(){
 		lightDirection_cameraspace = vertexPosition_cameraspace - lightPosition_cameraspace;
 		// lightDirection_cameraspace = lightPosition_cameraspace - vertexPosition_cameraspace;
 	} else {
-		gl_Position = M * vec4(vertexPosition_modelspace,1);
+		if (use_mvp) {
+			gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
+		} else {
+			gl_Position = M * vec4(vertexPosition_modelspace,1);
+		}
 	}
 }
