@@ -59,9 +59,9 @@ GLuint billboard_size_id;
 GLuint camera_up_id;
 GLuint camera_right_id;
 
-GLuint vertexbuffer;
-GLuint uvbuffer;
-GLuint normalbuffer;
+GLuint tetris_square_vertexbuffer;
+GLuint tetris_square_uvbuffer;
+GLuint tetris_square_normalbuffer;
 
 GLuint scoreboard_vertexbuffer;
 GLuint scoreboard_uvbuffer;
@@ -87,9 +87,9 @@ GLuint piece_type_flag_id;
 GLuint use_lighting_flag_id;
 GLuint use_mvp_flag_id;
 
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec2> uvs;
-std::vector<glm::vec3> normals;
+std::vector<glm::vec3> tetris_square_vertices;
+std::vector<glm::vec2> tetris_square_uvs;
+std::vector<glm::vec3> tetris_square_normals;
 
 std::vector<glm::vec3> scoreboard_vertices;
 std::vector<glm::vec2> scoreboard_uvs;
@@ -167,21 +167,14 @@ glm::vec3 position = camera_positions[4];
 glm::vec3 original_position = camera_positions[4];
 glm::vec3 destination_position = camera_positions[4];
 
-void draw_tetris_square()
+void draw_object(GLuint vertexbuffer, GLuint uvbuffer, int num_vertices)
 {
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 	glUniformMatrix4fv(MVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 	glUniformMatrix4fv(VMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-
-	glUniform3f(LightID, light_pos_x, light_pos_y, light_pos_z);
-
-	glUniform1f(ambient_id, ambient_component);
-	glUniform1f(diffuse_id, diffuse_component);
-	glUniform1i(specular_id, specular_exponent);
-
-	glUniform1i(use_lighting_flag_id, 1);
+	glUniformMatrix4fv(PMatrixID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -205,6 +198,14 @@ void draw_tetris_square()
 		(void *)0 // array buffer offset
 	);
 
+	glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+}
+
+void draw_object_with_normals(GLuint vertexbuffer, GLuint uvbuffer, GLuint normalbuffer, int num_vertices)
+{
 	// 3rd attribute buffer : normals
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
@@ -217,11 +218,22 @@ void draw_tetris_square()
 		(void *)0 // array buffer offset
 	);
 
-	glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+	draw_object(vertexbuffer, uvbuffer, num_vertices);
 
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(2);
+}
+
+void draw_tetris_square()
+{
+	glUniform3f(LightID, light_pos_x, light_pos_y, light_pos_z);
+
+	glUniform1f(ambient_id, ambient_component);
+	glUniform1f(diffuse_id, diffuse_component);
+	glUniform1i(specular_id, specular_exponent);
+
+	glUniform1i(use_lighting_flag_id, 1);
+
+	draw_object_with_normals(tetris_square_vertexbuffer, tetris_square_uvbuffer, tetris_square_normalbuffer, tetris_square_vertices.size());
 }
 
 void draw_tetris_board()
@@ -245,7 +257,6 @@ void draw_held_tetris_piece()
 {
 	glm::vec3 billboard_center = glm::vec3(-8.0f, board_height_gl - 5.0f, 0.0f);
 	ModelMatrix = glm::rotate(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 	glm::vec3 camera_right_worldspace = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
 	glm::vec3 camera_up_worldspace = glm::vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
@@ -307,11 +318,6 @@ void draw_held_tetris_piece()
 	glUniform3f(camera_up_id, camera_up_worldspace.x, camera_up_worldspace.y, camera_up_worldspace.z);
 	glUniform3f(camera_right_id, camera_right_worldspace.x, camera_right_worldspace.y, camera_right_worldspace.z);
 
-	glUniformMatrix4fv(MVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
-	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-	glUniformMatrix4fv(VMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-	glUniformMatrix4fv(PMatrixID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
-
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, current_texture);
 	glUniform1i(TextureID, 0);
@@ -320,33 +326,7 @@ void draw_held_tetris_piece()
 	glUniform1i(use_lighting_flag_id, 0);
 	glUniform1i(use_mvp_flag_id, 1);
 
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, current_vertexbuffer);
-	glVertexAttribPointer(
-		0,		  // attribute
-		3,		  // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		0,		  // stride
-		(void *)0 // array buffer offset
-	);
-
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, current_uvbuffer);
-	glVertexAttribPointer(
-		1,		  // attribute
-		2,		  // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		0,		  // stride
-		(void *)0 // array buffer offset
-	);
-
-	glDrawArrays(GL_TRIANGLES, 0, current_vertices.size());
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(3);
+	draw_object(current_vertexbuffer, current_uvbuffer, current_vertices.size());
 }
 
 void draw_upcoming_pieces(float y_offset)
@@ -401,12 +381,6 @@ void draw_upcoming_pieces(float y_offset)
 void draw_scoreboard_digit(int digit_place, int digit_value)
 {
 	ModelMatrix = glm::translate(vec3(0.95f - (digit_place * 0.085f), -0.9f, -0.5f)) * glm::scale(vec3(0.06f, 0.09f, 0.06f));
-	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-
-	glUniformMatrix4fv(MVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
-	glUniformMatrix4fv(MMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-	glUniformMatrix4fv(VMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-	glUniformMatrix4fv(PMatrixID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, Texture);
@@ -438,32 +412,7 @@ void draw_scoreboard_digit(int digit_place, int digit_value)
 	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_uvbuffer);
 	glBufferData(GL_ARRAY_BUFFER, current_uvs.size() * sizeof(glm::vec2), &current_uvs[0], GL_STATIC_DRAW);
 
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_vertexbuffer);
-	glVertexAttribPointer(
-		0,		  // attribute
-		3,		  // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		0,		  // stride
-		(void *)0 // array buffer offset
-	);
-
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_uvbuffer);
-	glVertexAttribPointer(
-		1,		  // attribute
-		2,		  // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		0,		  // stride
-		(void *)0 // array buffer offset
-	);
-
-	glDrawArrays(GL_TRIANGLES, 0, scoreboard_vertices.size());
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
+	draw_object(scoreboard_vertexbuffer, scoreboard_uvbuffer, scoreboard_vertices.size());
 }
 
 void draw_scoreboard(int score)
@@ -770,21 +719,21 @@ int main(void)
 	use_lighting_flag_id = glGetUniformLocation(programID, "use_lighting");
 	use_mvp_flag_id = glGetUniformLocation(programID, "use_mvp");
 
-	// loadOBJ("tetris_cube.obj", vertices, uvs, normals);
-	loadOBJ("tetris_cube_more_beveled.obj", vertices, uvs, normals);
-	// loadOBJ("tetris_cube_even_more_beveled.obj", vertices, uvs, normals);
+	// loadOBJ("tetris_cube.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals);
+	loadOBJ("tetris_cube_more_beveled.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals);
+	// loadOBJ("tetris_cube_even_more_beveled.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals);
 
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &tetris_square_vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, tetris_square_vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, tetris_square_vertices.size() * sizeof(glm::vec3), &tetris_square_vertices[0], GL_STATIC_DRAW);
 
-	glGenBuffers(1, &uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &tetris_square_uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, tetris_square_uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, tetris_square_uvs.size() * sizeof(glm::vec2), &tetris_square_uvs[0], GL_STATIC_DRAW);
 
-	glGenBuffers(1, &normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &tetris_square_normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, tetris_square_normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, tetris_square_normals.size() * sizeof(glm::vec3), &tetris_square_normals[0], GL_STATIC_DRAW);
 
 	loadOBJ("SSD_Digit.obj", scoreboard_vertices, scoreboard_uvs, scoreboard_normals);
 
@@ -966,9 +915,9 @@ int main(void)
 		   glfwWindowShouldClose(window) == 0);
 
 	// Cleanup VBO and shader
-	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteBuffers(1, &uvbuffer);
-	glDeleteBuffers(1, &normalbuffer);
+	glDeleteBuffers(1, &tetris_square_vertexbuffer);
+	glDeleteBuffers(1, &tetris_square_uvbuffer);
+	glDeleteBuffers(1, &tetris_square_normalbuffer);
 	glDeleteBuffers(1, &scoreboard_vertexbuffer);
 	glDeleteBuffers(1, &scoreboard_uvbuffer);
 	glDeleteBuffers(1, &scoreboard_normalbuffer);
