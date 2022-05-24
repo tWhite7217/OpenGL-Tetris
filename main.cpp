@@ -167,6 +167,20 @@ glm::vec3 position = camera_positions[4];
 glm::vec3 original_position = camera_positions[4];
 glm::vec3 destination_position = camera_positions[4];
 
+template <typename T>
+void fill_gl_buffer(GLuint buffer, std::vector<T> buffer_data)
+{
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, buffer_data.size() * sizeof(T), &buffer_data[0], GL_STATIC_DRAW);
+}
+
+template <typename T>
+void generate_and_fill_gl_buffer(GLuint &buffer, std::vector<T> buffer_data)
+{
+	glGenBuffers(1, &buffer);
+	fill_gl_buffer(buffer, buffer_data);
+}
+
 void draw_object(GLuint vertexbuffer, GLuint uvbuffer, int num_vertices)
 {
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
@@ -409,8 +423,7 @@ void draw_scoreboard_digit(int digit_place, int digit_value)
 		current_uvs.push_back(glm::vec2(xy.x + (0.2 * displacement_x), xy.y - (0.5 * displacement_y)));
 	}
 
-	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, current_uvs.size() * sizeof(glm::vec2), &current_uvs[0], GL_STATIC_DRAW);
+	fill_gl_buffer(scoreboard_uvbuffer, current_uvs);
 
 	draw_object(scoreboard_vertexbuffer, scoreboard_uvbuffer, scoreboard_vertices.size());
 }
@@ -719,81 +732,34 @@ int main(void)
 	use_lighting_flag_id = glGetUniformLocation(programID, "use_lighting");
 	use_mvp_flag_id = glGetUniformLocation(programID, "use_mvp");
 
-	// loadOBJ("tetris_cube.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals);
 	loadOBJ("tetris_cube_more_beveled.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals);
-	// loadOBJ("tetris_cube_even_more_beveled.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals);
-
-	glGenBuffers(1, &tetris_square_vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, tetris_square_vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, tetris_square_vertices.size() * sizeof(glm::vec3), &tetris_square_vertices[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &tetris_square_uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, tetris_square_uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, tetris_square_uvs.size() * sizeof(glm::vec2), &tetris_square_uvs[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &tetris_square_normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, tetris_square_normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, tetris_square_normals.size() * sizeof(glm::vec3), &tetris_square_normals[0], GL_STATIC_DRAW);
+	generate_and_fill_gl_buffer(tetris_square_vertexbuffer, tetris_square_vertices);
+	generate_and_fill_gl_buffer(tetris_square_uvbuffer, tetris_square_uvs);
+	generate_and_fill_gl_buffer(tetris_square_normalbuffer, tetris_square_normals);
 
 	loadOBJ("SSD_Digit.obj", scoreboard_vertices, scoreboard_uvs, scoreboard_normals);
-
-	glGenBuffers(1, &scoreboard_vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, scoreboard_vertices.size() * sizeof(glm::vec3), &scoreboard_vertices[0], GL_STATIC_DRAW);
-
+	generate_and_fill_gl_buffer(scoreboard_vertexbuffer, scoreboard_vertices);
 	glGenBuffers(1, &scoreboard_uvbuffer);
-
-	glGenBuffers(1, &scoreboard_normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, scoreboard_normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, scoreboard_normals.size() * sizeof(glm::vec3), &scoreboard_normals[0], GL_STATIC_DRAW);
+	generate_and_fill_gl_buffer(scoreboard_normalbuffer, scoreboard_normals);
 
 	loadOBJ("I_hold.obj", I_hold_vertices, I_hold_uvs, I_hold_normals);
-
-	glGenBuffers(1, &I_hold_vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, I_hold_vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, I_hold_vertices.size() * sizeof(glm::vec3), &I_hold_vertices[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &I_hold_uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, I_hold_uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, I_hold_uvs.size() * sizeof(glm::vec2), &I_hold_uvs[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &I_hold_normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, I_hold_normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, I_hold_normals.size() * sizeof(glm::vec3), &I_hold_normals[0], GL_STATIC_DRAW);
+	generate_and_fill_gl_buffer(I_hold_vertexbuffer, I_hold_vertices);
+	generate_and_fill_gl_buffer(I_hold_uvbuffer, I_hold_uvs);
+	generate_and_fill_gl_buffer(I_hold_normalbuffer, I_hold_normals);
 
 	loadOBJ("O_hold.obj", O_hold_vertices, O_hold_uvs, O_hold_normals);
-
-	glGenBuffers(1, &O_hold_vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, O_hold_vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, O_hold_vertices.size() * sizeof(glm::vec3), &O_hold_vertices[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &O_hold_uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, O_hold_uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, O_hold_uvs.size() * sizeof(glm::vec2), &O_hold_uvs[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &O_hold_normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, O_hold_normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, O_hold_normals.size() * sizeof(glm::vec3), &O_hold_normals[0], GL_STATIC_DRAW);
+	generate_and_fill_gl_buffer(O_hold_vertexbuffer, O_hold_vertices);
+	generate_and_fill_gl_buffer(O_hold_uvbuffer, O_hold_uvs);
+	generate_and_fill_gl_buffer(O_hold_normalbuffer, O_hold_normals);
 
 	loadOBJ("J_L_S_Z_T_hold.obj", J_L_S_Z_T_hold_vertices, J_L_S_Z_T_hold_uvs, J_L_S_Z_T_hold_normals);
-
-	glGenBuffers(1, &J_L_S_Z_T_hold_vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_vertices.size() * sizeof(glm::vec3), &J_L_S_Z_T_hold_vertices[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &J_L_S_Z_T_hold_uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_uvs.size() * sizeof(glm::vec2), &J_L_S_Z_T_hold_uvs[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &J_L_S_Z_T_hold_normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, J_L_S_Z_T_hold_normals.size() * sizeof(glm::vec3), &J_L_S_Z_T_hold_normals[0], GL_STATIC_DRAW);
+	generate_and_fill_gl_buffer(J_L_S_Z_T_hold_vertexbuffer, J_L_S_Z_T_hold_vertices);
+	generate_and_fill_gl_buffer(J_L_S_Z_T_hold_uvbuffer, J_L_S_Z_T_hold_uvs);
+	generate_and_fill_gl_buffer(J_L_S_Z_T_hold_normalbuffer, J_L_S_Z_T_hold_normals);
 
 	auto lastTime = std::chrono::system_clock::now();
 
 	ProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 205.0f);
-	// ViewMatrix = glm::lookAt(spline_points[i % spline_points.size()], center, up);
-	// ViewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, -25.0f), center, up);
 
 	int i = 0;
 
