@@ -117,6 +117,15 @@ private:
         }
     };
 
+    const std::unordered_map<PieceType, std::array<std::pair<int, int>, 4>> falling_piece_initial_positions = {
+        {I, {{{board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}, {board_height - 2, 6}}}},
+        {J, {{{board_height - 1, 3}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}},
+        {L, {{{board_height - 1, 5}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}},
+        {O, {{{board_height - 1, 4}, {board_height - 1, 5}, {board_height - 2, 4}, {board_height - 2, 5}}}},
+        {S, {{{board_height - 1, 4}, {board_height - 1, 5}, {board_height - 2, 3}, {board_height - 2, 4}}}},
+        {Z, {{{board_height - 1, 3}, {board_height - 1, 4}, {board_height - 2, 4}, {board_height - 2, 5}}}},
+        {T, {{{board_height - 1, 4}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}}};
+
     typedef std::unordered_map<std::pair<RotationState, RotationState>, std::array<std::pair<int, int>, 4>, RotationStatePairHashFunction> OffsetsMap;
 
     const std::unordered_map<PieceType, OffsetsMap> rotation_offsets_based_on_previous_top_left_square =
@@ -307,9 +316,10 @@ private:
     void move_falling_piece_right();
     void set_positions_to_color(const PiecePositions, const BoardSquareColor);
     void set_falling_piece_positions_to_one_lower();
-    void get_left_rotated_positions_and_state(PiecePositions &new_positions, RotationState &);
-    void get_right_rotated_positions_and_state(PiecePositions &new_positions, RotationState &);
+    void get_rotated_positions_and_state(PiecePositions &, RotationState &, RotationDirection);
+    RotationState get_new_rotation_state(RotationDirection);
     void rotate_falling_piece(RotationDirection);
+    void set_falling_piece_positions_to_rotated_values(RotationDirection);
     PiecePositions get_kicked_positions(PiecePositions, int, int);
     bool test_and_set_new_positions_and_state(PiecePositions, RotationState);
     bool new_positions_are_valid(PiecePositions);

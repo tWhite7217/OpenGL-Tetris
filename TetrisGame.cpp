@@ -58,7 +58,6 @@ void TetrisGame::hold_piece()
         auto prev_piece_type = falling_piece.type;
         if (a_piece_is_held)
         {
-            // std::cout << "here\n";
             add_piece_to_board(held_piece);
         }
         else
@@ -234,74 +233,7 @@ void TetrisGame::add_piece_to_board(PieceType type)
 
 void TetrisGame::initialize_falling_piece_positions(const PieceType type)
 {
-    switch (type)
-    {
-    case I:
-        falling_piece.positions = {{
-            {board_height - 2, 3},
-            {board_height - 2, 4},
-            {board_height - 2, 5},
-            {board_height - 2, 6},
-        }};
-        break;
-
-    case J:
-        falling_piece.positions = {{
-            {board_height - 1, 3},
-            {board_height - 2, 3},
-            {board_height - 2, 4},
-            {board_height - 2, 5},
-        }};
-        break;
-
-    case L:
-        falling_piece.positions = {{
-            {board_height - 1, 5},
-            {board_height - 2, 3},
-            {board_height - 2, 4},
-            {board_height - 2, 5},
-        }};
-        break;
-
-    case O:
-        falling_piece.positions = {{
-            {board_height - 1, 4},
-            {board_height - 1, 5},
-            {board_height - 2, 4},
-            {board_height - 2, 5},
-        }};
-        break;
-
-    case S:
-        falling_piece.positions = {{
-            {board_height - 1, 4},
-            {board_height - 1, 5},
-            {board_height - 2, 3},
-            {board_height - 2, 4},
-        }};
-        break;
-
-    case Z:
-        falling_piece.positions = {{
-            {board_height - 1, 3},
-            {board_height - 1, 4},
-            {board_height - 2, 4},
-            {board_height - 2, 5},
-        }};
-        break;
-
-    case T:
-        falling_piece.positions = {{
-            {board_height - 1, 4},
-            {board_height - 2, 3},
-            {board_height - 2, 4},
-            {board_height - 2, 5},
-        }};
-        break;
-
-    default:
-        break;
-    }
+    falling_piece.positions = falling_piece_initial_positions.at(type);
 }
 
 void TetrisGame::move_falling_piece_down()
@@ -375,17 +307,15 @@ void TetrisGame::hard_drop()
 
 void TetrisGame::rotate_left()
 {
-    if (falling_piece.type == O)
-    {
-        return;
-    }
-
-    remove_falling_piece_from_board();
     rotate_falling_piece(RotationDirection::LEFT);
-    add_falling_piece_to_board();
 }
 
 void TetrisGame::rotate_right()
+{
+    rotate_falling_piece(RotationDirection::RIGHT);
+}
+
+void TetrisGame::rotate_falling_piece(RotationDirection direction)
 {
     if (falling_piece.type == O)
     {
@@ -393,25 +323,18 @@ void TetrisGame::rotate_right()
     }
 
     remove_falling_piece_from_board();
-    rotate_falling_piece(RotationDirection::RIGHT);
+    set_falling_piece_positions_to_rotated_values(direction);
     add_falling_piece_to_board();
 }
 
-void TetrisGame::rotate_falling_piece(RotationDirection direction)
+void TetrisGame::set_falling_piece_positions_to_rotated_values(RotationDirection direction)
 {
     RotationState current_rotation_state = falling_piece.rotation_state;
 
     PiecePositions possible_new_positions;
     RotationState possible_new_rotation_state;
 
-    if (direction == RotationDirection::LEFT)
-    {
-        get_left_rotated_positions_and_state(possible_new_positions, possible_new_rotation_state);
-    }
-    else
-    {
-        get_right_rotated_positions_and_state(possible_new_positions, possible_new_rotation_state);
-    }
+    get_rotated_positions_and_state(possible_new_positions, possible_new_rotation_state, direction);
 
     auto positions_to_test = possible_new_positions;
     if (test_and_set_new_positions_and_state(positions_to_test, possible_new_rotation_state))
@@ -480,11 +403,11 @@ bool TetrisGame::new_positions_are_valid(PiecePositions positions)
     return true;
 };
 
-void TetrisGame::get_left_rotated_positions_and_state(PiecePositions &new_positions, RotationState &new_state)
+void TetrisGame::get_rotated_positions_and_state(PiecePositions &new_positions, RotationState &new_state, RotationDirection direction)
 {
     const auto [i, j] = falling_piece.positions[0];
 
-    new_state = static_cast<RotationState>(std::min(static_cast<unsigned int>(falling_piece.rotation_state) - 1, (unsigned)3));
+    new_state = get_new_rotation_state(direction);
 
     auto rotation_offsets = rotation_offsets_based_on_previous_top_left_square.at(falling_piece.type).at({falling_piece.rotation_state, new_state});
 
@@ -495,17 +418,14 @@ void TetrisGame::get_left_rotated_positions_and_state(PiecePositions &new_positi
     }
 }
 
-void TetrisGame::get_right_rotated_positions_and_state(PiecePositions &new_positions, RotationState &new_state)
+TetrisGame::RotationState TetrisGame::get_new_rotation_state(RotationDirection direction)
 {
-    const auto [i, j] = falling_piece.positions[0];
-
-    new_state = static_cast<RotationState>((static_cast<int>(falling_piece.rotation_state) + 1) % 4);
-
-    auto rotation_offsets = rotation_offsets_based_on_previous_top_left_square.at(falling_piece.type).at({falling_piece.rotation_state, new_state});
-
-    for (int x = 0; x < new_positions.size(); x++)
+    if (direction == RotationDirection::LEFT)
     {
-        const auto [i_offset, j_offset] = rotation_offsets[x];
-        new_positions[x] = {i + i_offset, j + j_offset};
+        return static_cast<RotationState>(std::min(static_cast<unsigned int>(falling_piece.rotation_state) - 1, (unsigned)3));
+    }
+    else
+    {
+        return static_cast<RotationState>((static_cast<int>(falling_piece.rotation_state) + 1) % 4);
     }
 }
