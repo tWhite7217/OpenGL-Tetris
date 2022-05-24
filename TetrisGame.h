@@ -35,7 +35,8 @@ const int upcoming_board_width = 4;
 const int upcoming_board_lines_per_piece = 3;
 const int num_upcoming_pieces_shown = 5;
 
-using PiecePositions = std::array<std::pair<int, int>, 4>;
+using SquarePosition = std::pair<int, int>;
+using PiecePositions = std::array<SquarePosition, 4>;
 using BoardLine = std::array<BoardSquareColor, board_width>;
 using TetrisBoard = std::array<BoardLine, board_height>;
 using UpcomingPiece = std::array<std::array<BoardSquareColor, upcoming_board_width>, upcoming_board_lines_per_piece>;
@@ -117,7 +118,7 @@ private:
         }
     };
 
-    const std::unordered_map<PieceType, std::array<std::pair<int, int>, 4>> falling_piece_initial_positions = {
+    const std::unordered_map<PieceType, PiecePositions> falling_piece_initial_positions = {
         {I, {{{board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}, {board_height - 2, 6}}}},
         {J, {{{board_height - 1, 3}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}},
         {L, {{{board_height - 1, 5}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}},
@@ -126,7 +127,7 @@ private:
         {Z, {{{board_height - 1, 3}, {board_height - 1, 4}, {board_height - 2, 4}, {board_height - 2, 5}}}},
         {T, {{{board_height - 1, 4}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}}};
 
-    typedef std::unordered_map<std::pair<RotationState, RotationState>, std::array<std::pair<int, int>, 4>, RotationStatePairHashFunction> OffsetsMap;
+    typedef std::unordered_map<std::pair<RotationState, RotationState>, PiecePositions, RotationStatePairHashFunction> OffsetsMap;
 
     const std::unordered_map<PieceType, OffsetsMap> rotation_offsets_based_on_previous_top_left_square =
         {
@@ -311,9 +312,11 @@ private:
     void add_next_piece_to_board();
     void add_piece_to_board(PieceType);
     void initialize_falling_piece_positions(const PieceType);
-    void move_falling_piece_down();
-    void move_falling_piece_left();
-    void move_falling_piece_right();
+    // void move_falling_piece_down();
+    // void move_falling_piece_left();
+    // void move_falling_piece_right();
+    void move_falling_piece(MovementDirection);
+    std::function<void(SquarePosition &)> get_position_modification_function(MovementDirection);
     void set_positions_to_color(const PiecePositions, const BoardSquareColor);
     void set_falling_piece_positions_to_one_lower();
     void get_rotated_positions_and_state(PiecePositions &, RotationState &, RotationDirection);

@@ -97,7 +97,7 @@ void TetrisGame::iterate_time()
     // } else
     if (falling_piece_can_move(MovementDirection::DOWN))
     {
-        move_falling_piece_down();
+        move_falling_piece(MovementDirection::DOWN);
     }
     else
     {
@@ -236,34 +236,31 @@ void TetrisGame::initialize_falling_piece_positions(const PieceType type)
     falling_piece.positions = falling_piece_initial_positions.at(type);
 }
 
-void TetrisGame::move_falling_piece_down()
+void TetrisGame::move_falling_piece(MovementDirection direction)
 {
     remove_falling_piece_from_board();
+    auto position_modification_function = get_position_modification_function(direction);
     for (int x = 0; x < falling_piece.positions.size(); x++)
     {
-        falling_piece.positions[x].first--;
+        position_modification_function(falling_piece.positions[x]);
     }
     add_falling_piece_to_board();
 }
 
-void TetrisGame::move_falling_piece_left()
+std::function<void(SquarePosition &)> TetrisGame::get_position_modification_function(MovementDirection direction)
 {
-    remove_falling_piece_from_board();
-    for (int x = 0; x < falling_piece.positions.size(); x++)
+    switch (direction)
     {
-        falling_piece.positions[x].second--;
+    case MovementDirection::LEFT:
+        return [](SquarePosition &position)
+        { position.second--; };
+    case MovementDirection::RIGHT:
+        return [](SquarePosition &position)
+        { position.second++; };
+    case MovementDirection::DOWN:
+        return [](SquarePosition &position)
+        { position.first--; };
     }
-    add_falling_piece_to_board();
-}
-
-void TetrisGame::move_falling_piece_right()
-{
-    remove_falling_piece_from_board();
-    for (int x = 0; x < falling_piece.positions.size(); x++)
-    {
-        falling_piece.positions[x].second++;
-    }
-    add_falling_piece_to_board();
 }
 
 void TetrisGame::set_positions_to_color(const PiecePositions positions, const BoardSquareColor color)
@@ -279,7 +276,7 @@ void TetrisGame::handle_left_input()
 
     if (falling_piece_can_move(MovementDirection::LEFT))
     {
-        move_falling_piece_left();
+        move_falling_piece(MovementDirection::LEFT);
     }
 }
 
@@ -287,7 +284,7 @@ void TetrisGame::handle_right_input()
 {
     if (falling_piece_can_move(MovementDirection::RIGHT))
     {
-        move_falling_piece_right();
+        move_falling_piece(MovementDirection::RIGHT);
     }
 }
 
@@ -300,7 +297,7 @@ void TetrisGame::hard_drop()
 {
     while (falling_piece_can_move(MovementDirection::DOWN))
     {
-        move_falling_piece_down();
+        move_falling_piece(MovementDirection::DOWN);
     }
     iterate_time();
 }
