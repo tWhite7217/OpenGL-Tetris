@@ -58,7 +58,6 @@ public:
     int get_score();
     PieceType get_held_piece();
     bool get_whether_a_piece_is_held();
-    // std::queue<PieceType> get_upcoming_pieces();
 
 private:
     enum class MovementDirection
@@ -78,8 +77,8 @@ private:
     {
         _0,
         _R,
+        _2,
         _L,
-        _2
     };
 
     const std::unordered_map<PieceType, BoardSquareColor> piece_colors = {
@@ -119,6 +118,70 @@ private:
     };
 
     typedef std::unordered_map<std::pair<RotationState, RotationState>, std::array<std::pair<int, int>, 4>, RotationStatePairHashFunction> OffsetsMap;
+
+    const std::unordered_map<PieceType, OffsetsMap> rotation_offsets_based_on_previous_top_left_square =
+        {
+            {I, {
+                    {{RotationState::_0, RotationState::_R}, {{{1, 2}, {0, 2}, {-1, 2}, {-2, 2}}}},
+                    {{RotationState::_R, RotationState::_0}, {{{-1, -2}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_R, RotationState::_2}, {{{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}}}},
+                    {{RotationState::_2, RotationState::_R}, {{{2, 2}, {1, 2}, {0, 2}, {-1, 2}}}},
+                    {{RotationState::_2, RotationState::_L}, {{{2, 1}, {1, 1}, {0, 1}, {-1, 1}}}},
+                    {{RotationState::_L, RotationState::_2}, {{{-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}}}},
+                    {{RotationState::_L, RotationState::_0}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-1, 2}}}},
+                    {{RotationState::_0, RotationState::_L}, {{{1, 1}, {0, 1}, {-1, 1}, {-2, 1}}}},
+                }},
+            {J, {
+                    {{RotationState::_0, RotationState::_R}, {{{0, 1}, {0, 2}, {-1, 1}, {-2, 1}}}},
+                    {{RotationState::_R, RotationState::_0}, {{{0, -1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 1}}}},
+                    {{RotationState::_2, RotationState::_R}, {{{1, 1}, {1, 2}, {0, 1}, {-1, 1}}}},
+                    {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 1}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 1}}}},
+                    {{RotationState::_L, RotationState::_0}, {{{0, -1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_0, RotationState::_L}, {{{0, 1}, {-1, 1}, {-2, 0}, {-2, 1}}}},
+                }},
+            {L, {
+                    {{RotationState::_0, RotationState::_R}, {{{0, -1}, {-1, -1}, {-2, -1}, {-2, 0}}}},
+                    {{RotationState::_R, RotationState::_0}, {{{0, 1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, -1}}}},
+                    {{RotationState::_2, RotationState::_R}, {{{1, 1}, {0, 1}, {-1, 1}, {-1, 2}}}},
+                    {{RotationState::_2, RotationState::_L}, {{{1, 0}, {1, 1}, {0, 1}, {-1, 1}}}},
+                    {{RotationState::_L, RotationState::_2}, {{{-1, 0}, {-1, 1}, {-1, 2}, {-2, 0}}}},
+                    {{RotationState::_L, RotationState::_0}, {{{0, 2}, {-1, 0}, {-1, 1}, {-1, 2}}}},
+                    {{RotationState::_0, RotationState::_L}, {{{0, -2}, {0, -1}, {-1, -1}, {-2, -1}}}},
+                }},
+            {S, {
+                    {{RotationState::_0, RotationState::_R}, {{{0, 0}, {-1, 0}, {-1, 1}, {-2, 1}}}},
+                    {{RotationState::_R, RotationState::_0}, {{{0, 0}, {0, 1}, {-1, -1}, {-1, 0}}}},
+                    {{RotationState::_R, RotationState::_2}, {{{-1, 0}, {-1, 1}, {-2, -1}, {-2, 0}}}},
+                    {{RotationState::_2, RotationState::_R}, {{{1, 0}, {0, 0}, {0, 1}, {-1, 1}}}},
+                    {{RotationState::_2, RotationState::_L}, {{{1, -1}, {0, -1}, {0, 0}, {-1, 0}}}},
+                    {{RotationState::_L, RotationState::_2}, {{{-1, 1}, {-1, 2}, {-2, 0}, {-2, 1}}}},
+                    {{RotationState::_L, RotationState::_0}, {{{0, 1}, {0, 2}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_0, RotationState::_L}, {{{0, -1}, {-1, -1}, {-1, 0}, {-2, 0}}}},
+                }},
+            {Z, {
+                    {{RotationState::_0, RotationState::_R}, {{{0, 2}, {-1, 1}, {-1, 2}, {-2, 1}}}},
+                    {{RotationState::_R, RotationState::_0}, {{{0, -2}, {0, -1}, {-1, -1}, {-1, 0}}}},
+                    {{RotationState::_R, RotationState::_2}, {{{-1, -2}, {-1, -1}, {-2, -1}, {-2, 0}}}},
+                    {{RotationState::_2, RotationState::_R}, {{{1, 2}, {0, 1}, {0, 2}, {-1, 1}}}},
+                    {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 0}, {0, 1}, {-1, 0}}}},
+                    {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-2, 0}, {-2, 1}}}},
+                    {{RotationState::_L, RotationState::_0}, {{{0, -1}, {0, 0}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_0, RotationState::_L}, {{{0, 1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
+                }},
+            {T, {
+                    {{RotationState::_0, RotationState::_R}, {{{0, 0}, {-1, 0}, {-1, 1}, {-2, 0}}}},
+                    {{RotationState::_R, RotationState::_0}, {{{0, 0}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
+                    {{RotationState::_2, RotationState::_R}, {{{1, 1}, {0, 1}, {0, 2}, {0, 2}}}},
+                    {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 0}, {0, 1}, {-1, 1}}}},
+                    {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
+                    {{RotationState::_L, RotationState::_0}, {{{0, 0}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                    {{RotationState::_0, RotationState::_L}, {{{0, 0}, {-1, -1}, {-1, 0}, {-2, 0}}}},
+                }},
+    };
 
     const OffsetsMap I_kick_offsets =
         {
