@@ -67,15 +67,9 @@ GLuint scoreboard_vertexbuffer;
 GLuint scoreboard_uvbuffer;
 GLuint scoreboard_normalbuffer;
 
-GLuint I_hold_vertexbuffer;
-GLuint I_hold_uvbuffer;
-GLuint I_hold_normalbuffer;
-GLuint O_hold_vertexbuffer;
-GLuint O_hold_uvbuffer;
-GLuint O_hold_normalbuffer;
-GLuint J_L_S_Z_T_hold_vertexbuffer;
-GLuint J_L_S_Z_T_hold_uvbuffer;
-GLuint J_L_S_Z_T_hold_normalbuffer;
+GLuint hold_vertexbuffer;
+GLuint hold_uvbuffer;
+GLuint hold_normalbuffer;
 
 float ambient_component = 0.1;
 float diffuse_component = 0.85;
@@ -95,15 +89,9 @@ std::vector<glm::vec3> scoreboard_vertices;
 std::vector<glm::vec2> scoreboard_uvs;
 std::vector<glm::vec3> scoreboard_normals;
 
-std::vector<glm::vec3> I_hold_vertices;
-std::vector<glm::vec2> I_hold_uvs;
-std::vector<glm::vec3> I_hold_normals;
-std::vector<glm::vec3> O_hold_vertices;
-std::vector<glm::vec2> O_hold_uvs;
-std::vector<glm::vec3> O_hold_normals;
-std::vector<glm::vec3> J_L_S_Z_T_hold_vertices;
-std::vector<glm::vec2> J_L_S_Z_T_hold_uvs;
-std::vector<glm::vec3> J_L_S_Z_T_hold_normals;
+std::vector<glm::vec3> hold_vertices;
+std::vector<glm::vec2> hold_uvs;
+std::vector<glm::vec3> hold_normals;
 
 glm::mat4 ModelMatrix;
 glm::mat4 ViewMatrix;
@@ -275,10 +263,7 @@ void draw_held_tetris_piece()
 	glm::vec3 camera_right_worldspace = glm::vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
 	glm::vec3 camera_up_worldspace = glm::vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
 
-	std::vector<glm::vec3> current_vertices;
 	GLuint current_texture;
-	GLuint current_vertexbuffer;
-	GLuint current_uvbuffer;
 
 	glm::vec2 billboard_size;
 
@@ -287,23 +272,14 @@ void draw_held_tetris_piece()
 	{
 	case I:
 		billboard_size = glm::vec2(2, 1.5);
-		current_vertices = I_hold_vertices;
 		current_texture = I_billboard_texture;
-		current_vertexbuffer = I_hold_vertexbuffer;
-		current_uvbuffer = I_hold_uvbuffer;
 		break;
 	case O:
-		billboard_size = glm::vec2(3, 3);
-		current_vertices = O_hold_vertices;
+		billboard_size = glm::vec2(1.3, 3);
 		current_texture = O_billboard_texture;
-		current_vertexbuffer = O_hold_vertexbuffer;
-		current_uvbuffer = O_hold_uvbuffer;
 		break;
 	default:
-		billboard_size = glm::vec2(3.6, 3);
-		current_vertices = J_L_S_Z_T_hold_vertices;
-		current_vertexbuffer = J_L_S_Z_T_hold_vertexbuffer;
-		current_uvbuffer = J_L_S_Z_T_hold_uvbuffer;
+		billboard_size = glm::vec2(2, 3);
 		switch (held_piece_type)
 		{
 		case J:
@@ -340,7 +316,7 @@ void draw_held_tetris_piece()
 	glUniform1i(use_lighting_flag_id, 0);
 	glUniform1i(use_mvp_flag_id, 1);
 
-	draw_object(current_vertexbuffer, current_uvbuffer, current_vertices.size());
+	draw_object(hold_vertexbuffer, hold_uvbuffer, hold_vertices.size());
 }
 
 void draw_upcoming_pieces(float y_offset)
@@ -742,20 +718,10 @@ int main(void)
 	glGenBuffers(1, &scoreboard_uvbuffer);
 	generate_and_fill_gl_buffer(scoreboard_normalbuffer, scoreboard_normals);
 
-	loadOBJ("I_hold.obj", I_hold_vertices, I_hold_uvs, I_hold_normals);
-	generate_and_fill_gl_buffer(I_hold_vertexbuffer, I_hold_vertices);
-	generate_and_fill_gl_buffer(I_hold_uvbuffer, I_hold_uvs);
-	generate_and_fill_gl_buffer(I_hold_normalbuffer, I_hold_normals);
-
-	loadOBJ("O_hold.obj", O_hold_vertices, O_hold_uvs, O_hold_normals);
-	generate_and_fill_gl_buffer(O_hold_vertexbuffer, O_hold_vertices);
-	generate_and_fill_gl_buffer(O_hold_uvbuffer, O_hold_uvs);
-	generate_and_fill_gl_buffer(O_hold_normalbuffer, O_hold_normals);
-
-	loadOBJ("J_L_S_Z_T_hold.obj", J_L_S_Z_T_hold_vertices, J_L_S_Z_T_hold_uvs, J_L_S_Z_T_hold_normals);
-	generate_and_fill_gl_buffer(J_L_S_Z_T_hold_vertexbuffer, J_L_S_Z_T_hold_vertices);
-	generate_and_fill_gl_buffer(J_L_S_Z_T_hold_uvbuffer, J_L_S_Z_T_hold_uvs);
-	generate_and_fill_gl_buffer(J_L_S_Z_T_hold_normalbuffer, J_L_S_Z_T_hold_normals);
+	loadOBJ("hold.obj", hold_vertices, hold_uvs, hold_normals);
+	generate_and_fill_gl_buffer(hold_vertexbuffer, hold_vertices);
+	generate_and_fill_gl_buffer(hold_uvbuffer, hold_uvs);
+	generate_and_fill_gl_buffer(hold_normalbuffer, hold_normals);
 
 	auto lastTime = std::chrono::system_clock::now();
 
@@ -887,6 +853,9 @@ int main(void)
 	glDeleteBuffers(1, &scoreboard_vertexbuffer);
 	glDeleteBuffers(1, &scoreboard_uvbuffer);
 	glDeleteBuffers(1, &scoreboard_normalbuffer);
+	glDeleteBuffers(1, &hold_vertexbuffer);
+	glDeleteBuffers(1, &hold_uvbuffer);
+	glDeleteBuffers(1, &hold_normalbuffer);
 	glDeleteBuffers(1, &camera_line_vertexbuffer);
 	glDeleteProgram(programID);
 	glDeleteTextures(1, &light_blue_texture);
