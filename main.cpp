@@ -450,143 +450,117 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 {
 	if (action == GLFW_PRESS)
 	{
-		if (key == GLFW_KEY_W)
+		switch (key)
 		{
+		case GLFW_KEY_W:
 			tetris_game.soft_drop();
 			soft_drop_is_active = true;
 			soft_drop_counter = 0;
 			iteration_counter = 0;
-		}
-		else if (key == GLFW_KEY_S)
-		{
+			break;
+		case GLFW_KEY_S:
 			tetris_game.hard_drop();
-		}
-		else if (key == GLFW_KEY_A)
-		{
+			break;
+		case GLFW_KEY_A:
 			tetris_game.handle_left_input();
 			left_is_active = true;
 			movement_counter = 0;
-		}
-		else if (key == GLFW_KEY_D)
-		{
+			break;
+		case GLFW_KEY_D:
 			tetris_game.handle_right_input();
 			right_is_active = true;
 			movement_counter = 0;
-		}
-		else if (key == GLFW_KEY_LEFT)
-		{
+			break;
+		case GLFW_KEY_LEFT:
 			tetris_game.rotate_left();
-		}
-		else if (key == GLFW_KEY_RIGHT)
-		{
+			break;
+		case GLFW_KEY_RIGHT:
 			tetris_game.rotate_right();
-		}
-		else if (key == GLFW_KEY_KP_7)
-		{
+			break;
+		case GLFW_KEY_KP_7:
 			decrement_and_print_value_with_min(light_pos_x, light_pos_delta, -1000.0f);
-		}
-		else if (key == GLFW_KEY_KP_9)
-		{
+			break;
+		case GLFW_KEY_KP_9:
 			increment_and_print_value_with_max(light_pos_x, light_pos_delta, 1000.0f);
-		}
-		else if (key == GLFW_KEY_KP_4)
-		{
+			break;
+		case GLFW_KEY_KP_4:
 			decrement_and_print_value_with_min(light_pos_y, light_pos_delta, -1000.0f);
-		}
-		else if (key == GLFW_KEY_KP_6)
-		{
+			break;
+		case GLFW_KEY_KP_6:
 			increment_and_print_value_with_max(light_pos_y, light_pos_delta, 1000.0f);
-		}
-		else if (key == GLFW_KEY_KP_1)
-		{
+			break;
+		case GLFW_KEY_KP_1:
 			decrement_and_print_value_with_min(light_pos_z, light_pos_delta, -1000.0f);
-		}
-		else if (key == GLFW_KEY_KP_3)
-		{
+			break;
+		case GLFW_KEY_KP_3:
 			increment_and_print_value_with_max(light_pos_z, light_pos_delta, 1000.0f);
-		}
-		else if (key == GLFW_KEY_INSERT)
-		{
+			break;
+		case GLFW_KEY_INSERT:
 			increment_and_print_value_with_max(ambient_component, 0.01f, 1.0f);
-		}
-		else if (key == GLFW_KEY_DELETE)
-		{
+			break;
+		case GLFW_KEY_DELETE:
 			decrement_and_print_value_with_min(ambient_component, 0.01f, 0.0f);
-		}
-		else if (key == GLFW_KEY_HOME)
-		{
+			break;
+		case GLFW_KEY_HOME:
 			increment_and_print_value_with_max(diffuse_component, 0.02f, 1.0f);
-		}
-		else if (key == GLFW_KEY_END)
-		{
+			break;
+		case GLFW_KEY_END:
 			decrement_and_print_value_with_min(diffuse_component, 0.02f, 0.0f);
-		}
-		else if (key == GLFW_KEY_PAGE_UP)
-		{
+			break;
+		case GLFW_KEY_PAGE_UP:
 			increment_and_print_value_with_max(specular_exponent, 6, 10000);
-		}
-		else if (key == GLFW_KEY_PAGE_DOWN)
-		{
+			break;
+		case GLFW_KEY_PAGE_DOWN:
 			decrement_and_print_value_with_min(specular_exponent, 5, 1);
-		}
-		else if (key == GLFW_KEY_G)
-		{
+			break;
+		case GLFW_KEY_G:
 			begin_moving_camera_to(vec3(-70.0f, 20.0f, 0.0f));
-		}
-		else if (key == GLFW_KEY_Y)
-		{
+			break;
+		case GLFW_KEY_Y:
 			begin_moving_camera_to(camera_positions[0]);
-		}
-		else if (key == GLFW_KEY_U)
-		{
+			break;
+		case GLFW_KEY_U:
 			begin_moving_camera_to(camera_positions[1]);
-		}
-		else if (key == GLFW_KEY_I)
-		{
+			break;
+		case GLFW_KEY_I:
 			begin_moving_camera_to(camera_positions[2]);
-		}
-		else if (key == GLFW_KEY_H)
-		{
+			break;
+		case GLFW_KEY_H:
 			begin_moving_camera_to(camera_positions[3]);
-		}
-		else if (key == GLFW_KEY_J)
-		{
+			break;
+		case GLFW_KEY_J:
 			begin_moving_camera_to(camera_positions[4]);
-		}
-		else if (key == GLFW_KEY_K)
-		{
+			break;
+		case GLFW_KEY_K:
 			begin_moving_camera_to(camera_positions[5]);
-		}
-		else if (key == GLFW_KEY_B)
-		{
+			break;
+		case GLFW_KEY_B:
 			begin_moving_camera_to(camera_positions[6]);
-		}
-		else if (key == GLFW_KEY_N)
-		{
+			break;
+		case GLFW_KEY_N:
 			begin_moving_camera_to(camera_positions[7]);
-		}
-		else if (key == GLFW_KEY_M)
-		{
+			break;
+		case GLFW_KEY_M:
 			begin_moving_camera_to(camera_positions[8]);
-		}
-		else if (key == GLFW_KEY_LEFT_SHIFT)
-		{
+			break;
+		case GLFW_KEY_LEFT_SHIFT:
 			tetris_game.hold_piece();
+			break;
 		}
 	}
 	else if (action == GLFW_RELEASE)
 	{
-		if (key == GLFW_KEY_W)
+		switch (key)
 		{
+		GLFW_KEY_W:
 			soft_drop_is_active = false;
-		}
-		else if (key == GLFW_KEY_A)
-		{
+			break;
+		case GLFW_KEY_A:
 			left_is_active = false;
-		}
-		else if (key == GLFW_KEY_D)
-		{
+			break;
+		case GLFW_KEY_D:
 			right_is_active = false;
+			break;
 		}
 	}
 }
