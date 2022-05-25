@@ -425,6 +425,27 @@ void draw_scoreboard(int score)
 	draw_scoreboard_digit(0, ones);
 }
 
+void begin_moving_camera_to(glm::vec3 new_position)
+{
+	original_position = position;
+	destination_position = new_position;
+	time_since_camera_change_started = 0ms;
+}
+
+template <typename T>
+void increment_and_print_value_with_max(T &value, T delta, T max_value)
+{
+	value = std::min(value + delta, max_value);
+	std::cout << value << "\n";
+}
+
+template <typename T>
+void decrement_and_print_value_with_min(T &value, T delta, T min_value)
+{
+	value = std::max(value - delta, min_value);
+	std::cout << value << "\n";
+}
+
 void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
 	if (action == GLFW_PRESS)
@@ -462,127 +483,91 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 		else if (key == GLFW_KEY_KP_7)
 		{
-			light_pos_x -= light_pos_delta;
-			std::cout << light_pos_x << "\n";
+			decrement_and_print_value_with_min(light_pos_x, light_pos_delta, -1000.0f);
 		}
 		else if (key == GLFW_KEY_KP_9)
 		{
-			light_pos_x += light_pos_delta;
-			std::cout << light_pos_x << "\n";
+			increment_and_print_value_with_max(light_pos_x, light_pos_delta, 1000.0f);
 		}
 		else if (key == GLFW_KEY_KP_4)
 		{
-			light_pos_y -= light_pos_delta;
-			std::cout << light_pos_y << "\n";
+			decrement_and_print_value_with_min(light_pos_y, light_pos_delta, -1000.0f);
 		}
 		else if (key == GLFW_KEY_KP_6)
 		{
-			light_pos_y += light_pos_delta;
-			std::cout << light_pos_y << "\n";
+			increment_and_print_value_with_max(light_pos_y, light_pos_delta, 1000.0f);
 		}
 		else if (key == GLFW_KEY_KP_1)
 		{
-			light_pos_z -= light_pos_delta;
-			std::cout << light_pos_z << "\n";
+			decrement_and_print_value_with_min(light_pos_z, light_pos_delta, -1000.0f);
 		}
 		else if (key == GLFW_KEY_KP_3)
 		{
-			light_pos_z += light_pos_delta;
-			std::cout << light_pos_z << "\n";
+			increment_and_print_value_with_max(light_pos_z, light_pos_delta, 1000.0f);
 		}
 		else if (key == GLFW_KEY_INSERT)
 		{
-			ambient_component += 0.01f;
-			ambient_component = std::min(1.0f, ambient_component);
-			std::cout << ambient_component << "\n";
+			increment_and_print_value_with_max(ambient_component, 0.01f, 1.0f);
 		}
 		else if (key == GLFW_KEY_DELETE)
 		{
-			ambient_component -= 0.01f;
-			ambient_component = std::max(0.0f, ambient_component);
-			std::cout << ambient_component << "\n";
+			decrement_and_print_value_with_min(ambient_component, 0.01f, 0.0f);
 		}
 		else if (key == GLFW_KEY_HOME)
 		{
-			diffuse_component += 0.02f;
-			diffuse_component = std::min(1.0f, diffuse_component);
-			std::cout << diffuse_component << "\n";
+			increment_and_print_value_with_max(diffuse_component, 0.02f, 1.0f);
 		}
 		else if (key == GLFW_KEY_END)
 		{
-			diffuse_component -= 0.02f;
-			diffuse_component = std::max(0.0f, diffuse_component);
-			std::cout << diffuse_component << "\n";
+			decrement_and_print_value_with_min(diffuse_component, 0.02f, 0.0f);
 		}
 		else if (key == GLFW_KEY_PAGE_UP)
 		{
-			specular_exponent += 6;
-			std::cout << specular_exponent << "\n";
+			increment_and_print_value_with_max(specular_exponent, 6, 10000);
 		}
 		else if (key == GLFW_KEY_PAGE_DOWN)
 		{
-			specular_exponent = std::max(1, specular_exponent - 5);
-			std::cout << specular_exponent << "\n";
+			decrement_and_print_value_with_min(specular_exponent, 5, 1);
 		}
 		else if (key == GLFW_KEY_G)
 		{
-			original_position = position;
-			destination_position = vec3(-70.0f, 20.0f, 0.0f);
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(vec3(-70.0f, 20.0f, 0.0f));
 		}
 		else if (key == GLFW_KEY_Y)
 		{
-			original_position = position;
-			destination_position = camera_positions[0];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[0]);
 		}
 		else if (key == GLFW_KEY_U)
 		{
-			original_position = position;
-			destination_position = camera_positions[1];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[1]);
 		}
 		else if (key == GLFW_KEY_I)
 		{
-			original_position = position;
-			destination_position = camera_positions[2];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[2]);
 		}
 		else if (key == GLFW_KEY_H)
 		{
-			original_position = position;
-			destination_position = camera_positions[3];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[3]);
 		}
 		else if (key == GLFW_KEY_J)
 		{
-			original_position = position;
-			destination_position = camera_positions[4];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[4]);
 		}
 		else if (key == GLFW_KEY_K)
 		{
-			original_position = position;
-			destination_position = camera_positions[5];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[5]);
 		}
 		else if (key == GLFW_KEY_B)
 		{
-			original_position = position;
-			destination_position = camera_positions[6];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[6]);
 		}
 		else if (key == GLFW_KEY_N)
 		{
-			original_position = position;
-			destination_position = camera_positions[7];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[7]);
 		}
 		else if (key == GLFW_KEY_M)
 		{
-			original_position = position;
-			destination_position = camera_positions[8];
-			time_since_camera_change_started = 0ms;
+			begin_moving_camera_to(camera_positions[8]);
 		}
 		else if (key == GLFW_KEY_LEFT_SHIFT)
 		{
