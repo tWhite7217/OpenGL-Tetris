@@ -5,46 +5,39 @@
 #include <array>
 #include <functional>
 
-typedef enum
-{
-    I,
-    J,
-    L,
-    O,
-    S,
-    Z,
-    T
-} PieceType;
-
-typedef enum
-{
-    LIGHT_BLUE,
-    DARK_BLUE,
-    ORANGE,
-    YELLOW,
-    GREEN,
-    RED,
-    MAGENTA,
-    EMPTY
-} BoardSquareColor;
-
-const int board_height = 22;
-const int board_width = 10;
-
-const int upcoming_board_width = 4;
-const int upcoming_board_lines_per_piece = 3;
-const int num_upcoming_pieces_shown = 5;
-
-using SquarePosition = std::pair<int, int>;
-using PiecePositions = std::array<SquarePosition, 4>;
-using BoardLine = std::array<BoardSquareColor, board_width>;
-using TetrisBoard = std::array<BoardLine, board_height>;
-using UpcomingPiece = std::array<std::array<BoardSquareColor, upcoming_board_width>, upcoming_board_lines_per_piece>;
-using UpcomingBoard = std::array<UpcomingPiece, num_upcoming_pieces_shown>;
-
 class TetrisGame
 {
 public:
+    static const int board_height = 22;
+    static const int board_width = 10;
+
+    static const int upcoming_board_width = 4;
+    static const int upcoming_board_lines_per_piece = 3;
+    static const int num_upcoming_pieces_shown = 5;
+
+    enum class PieceType
+    {
+        I,
+        J,
+        L,
+        O,
+        S,
+        Z,
+        T
+    };
+
+    enum class BoardSquareColor
+    {
+        LIGHT_BLUE,
+        DARK_BLUE,
+        ORANGE,
+        YELLOW,
+        GREEN,
+        RED,
+        MAGENTA,
+        EMPTY
+    };
+
     TetrisGame();
     void iterate_time();
     BoardSquareColor get_square(const int, const int);
@@ -61,6 +54,14 @@ public:
     bool get_whether_a_piece_is_held();
 
 private:
+    using BSC = BoardSquareColor;
+    using SquarePosition = std::pair<int, int>;
+    using PiecePositions = std::array<SquarePosition, 4>;
+    using BoardLine = std::array<BoardSquareColor, board_width>;
+    using TetrisBoard = std::array<BoardLine, board_height>;
+    using UpcomingPiece = std::array<std::array<BoardSquareColor, upcoming_board_width>, upcoming_board_lines_per_piece>;
+    using UpcomingBoard = std::array<UpcomingPiece, num_upcoming_pieces_shown>;
+
     enum class MovementDirection
     {
         LEFT,
@@ -82,14 +83,14 @@ private:
         _L,
     };
 
-    const std::unordered_map<PieceType, BoardSquareColor> piece_colors = {
-        {I, LIGHT_BLUE},
-        {J, DARK_BLUE},
-        {L, ORANGE},
-        {O, YELLOW},
-        {S, GREEN},
-        {Z, RED},
-        {T, MAGENTA},
+    inline static const std::unordered_map<PieceType, BoardSquareColor> piece_colors = {
+        {PieceType::I, BSC::LIGHT_BLUE},
+        {PieceType::J, BSC::DARK_BLUE},
+        {PieceType::L, BSC::ORANGE},
+        {PieceType::O, BSC::YELLOW},
+        {PieceType::S, BSC::GREEN},
+        {PieceType::Z, BSC::RED},
+        {PieceType::T, BSC::MAGENTA},
     };
 
     struct FallingPiece
@@ -104,7 +105,7 @@ private:
     bool a_piece_was_held_this_turn = false;
     PieceType held_piece;
     std::queue<PieceType> upcoming_pieces;
-    std::array<PieceType, 7> seven_bag = {I, J, L, O, S, Z, T};
+    std::array<PieceType, 7> seven_bag = {PieceType::I, PieceType::J, PieceType::L, PieceType::O, PieceType::S, PieceType::Z, PieceType::T};
 
     class RotationStatePairHashFunction
     {
@@ -118,85 +119,85 @@ private:
         }
     };
 
-    const std::unordered_map<PieceType, PiecePositions> falling_piece_initial_positions = {
-        {I, {{{board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}, {board_height - 2, 6}}}},
-        {J, {{{board_height - 1, 3}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}},
-        {L, {{{board_height - 1, 5}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}},
-        {O, {{{board_height - 1, 4}, {board_height - 1, 5}, {board_height - 2, 4}, {board_height - 2, 5}}}},
-        {S, {{{board_height - 1, 4}, {board_height - 1, 5}, {board_height - 2, 3}, {board_height - 2, 4}}}},
-        {Z, {{{board_height - 1, 3}, {board_height - 1, 4}, {board_height - 2, 4}, {board_height - 2, 5}}}},
-        {T, {{{board_height - 1, 4}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}}};
+    inline static const std::unordered_map<PieceType, PiecePositions> falling_piece_initial_positions = {
+        {PieceType::I, {{{board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}, {board_height - 2, 6}}}},
+        {PieceType::J, {{{board_height - 1, 3}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}},
+        {PieceType::L, {{{board_height - 1, 5}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}},
+        {PieceType::O, {{{board_height - 1, 4}, {board_height - 1, 5}, {board_height - 2, 4}, {board_height - 2, 5}}}},
+        {PieceType::S, {{{board_height - 1, 4}, {board_height - 1, 5}, {board_height - 2, 3}, {board_height - 2, 4}}}},
+        {PieceType::Z, {{{board_height - 1, 3}, {board_height - 1, 4}, {board_height - 2, 4}, {board_height - 2, 5}}}},
+        {PieceType::T, {{{board_height - 1, 4}, {board_height - 2, 3}, {board_height - 2, 4}, {board_height - 2, 5}}}}};
 
     typedef std::unordered_map<std::pair<RotationState, RotationState>, PiecePositions, RotationStatePairHashFunction> OffsetsMap;
 
-    const std::unordered_map<PieceType, OffsetsMap> rotation_offsets_based_on_previous_top_left_square =
+    inline static const std::unordered_map<PieceType, OffsetsMap> rotation_offsets_based_on_previous_top_left_square =
         {
-            {I, {
-                    {{RotationState::_0, RotationState::_R}, {{{1, 2}, {0, 2}, {-1, 2}, {-2, 2}}}},
-                    {{RotationState::_R, RotationState::_0}, {{{-1, -2}, {-1, -1}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_R, RotationState::_2}, {{{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}}}},
-                    {{RotationState::_2, RotationState::_R}, {{{2, 2}, {1, 2}, {0, 2}, {-1, 2}}}},
-                    {{RotationState::_2, RotationState::_L}, {{{2, 1}, {1, 1}, {0, 1}, {-1, 1}}}},
-                    {{RotationState::_L, RotationState::_2}, {{{-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}}}},
-                    {{RotationState::_L, RotationState::_0}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-1, 2}}}},
-                    {{RotationState::_0, RotationState::_L}, {{{1, 1}, {0, 1}, {-1, 1}, {-2, 1}}}},
-                }},
-            {J, {
-                    {{RotationState::_0, RotationState::_R}, {{{0, 1}, {0, 2}, {-1, 1}, {-2, 1}}}},
-                    {{RotationState::_R, RotationState::_0}, {{{0, -1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 1}}}},
-                    {{RotationState::_2, RotationState::_R}, {{{1, 1}, {1, 2}, {0, 1}, {-1, 1}}}},
-                    {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 1}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 1}}}},
-                    {{RotationState::_L, RotationState::_0}, {{{0, -1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_0, RotationState::_L}, {{{0, 1}, {-1, 1}, {-2, 0}, {-2, 1}}}},
-                }},
-            {L, {
-                    {{RotationState::_0, RotationState::_R}, {{{0, -1}, {-1, -1}, {-2, -1}, {-2, 0}}}},
-                    {{RotationState::_R, RotationState::_0}, {{{0, 1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, -1}}}},
-                    {{RotationState::_2, RotationState::_R}, {{{1, 1}, {0, 1}, {-1, 1}, {-1, 2}}}},
-                    {{RotationState::_2, RotationState::_L}, {{{1, 0}, {1, 1}, {0, 1}, {-1, 1}}}},
-                    {{RotationState::_L, RotationState::_2}, {{{-1, 0}, {-1, 1}, {-1, 2}, {-2, 0}}}},
-                    {{RotationState::_L, RotationState::_0}, {{{0, 2}, {-1, 0}, {-1, 1}, {-1, 2}}}},
-                    {{RotationState::_0, RotationState::_L}, {{{0, -2}, {0, -1}, {-1, -1}, {-2, -1}}}},
-                }},
-            {S, {
-                    {{RotationState::_0, RotationState::_R}, {{{0, 0}, {-1, 0}, {-1, 1}, {-2, 1}}}},
-                    {{RotationState::_R, RotationState::_0}, {{{0, 0}, {0, 1}, {-1, -1}, {-1, 0}}}},
-                    {{RotationState::_R, RotationState::_2}, {{{-1, 0}, {-1, 1}, {-2, -1}, {-2, 0}}}},
-                    {{RotationState::_2, RotationState::_R}, {{{1, 0}, {0, 0}, {0, 1}, {-1, 1}}}},
-                    {{RotationState::_2, RotationState::_L}, {{{1, -1}, {0, -1}, {0, 0}, {-1, 0}}}},
-                    {{RotationState::_L, RotationState::_2}, {{{-1, 1}, {-1, 2}, {-2, 0}, {-2, 1}}}},
-                    {{RotationState::_L, RotationState::_0}, {{{0, 1}, {0, 2}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_0, RotationState::_L}, {{{0, -1}, {-1, -1}, {-1, 0}, {-2, 0}}}},
-                }},
-            {Z, {
-                    {{RotationState::_0, RotationState::_R}, {{{0, 2}, {-1, 1}, {-1, 2}, {-2, 1}}}},
-                    {{RotationState::_R, RotationState::_0}, {{{0, -2}, {0, -1}, {-1, -1}, {-1, 0}}}},
-                    {{RotationState::_R, RotationState::_2}, {{{-1, -2}, {-1, -1}, {-2, -1}, {-2, 0}}}},
-                    {{RotationState::_2, RotationState::_R}, {{{1, 2}, {0, 1}, {0, 2}, {-1, 1}}}},
-                    {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 0}, {0, 1}, {-1, 0}}}},
-                    {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-2, 0}, {-2, 1}}}},
-                    {{RotationState::_L, RotationState::_0}, {{{0, -1}, {0, 0}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_0, RotationState::_L}, {{{0, 1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
-                }},
-            {T, {
-                    {{RotationState::_0, RotationState::_R}, {{{0, 0}, {-1, 0}, {-1, 1}, {-2, 0}}}},
-                    {{RotationState::_R, RotationState::_0}, {{{0, 0}, {-1, -1}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
-                    {{RotationState::_2, RotationState::_R}, {{{1, 1}, {0, 1}, {0, 2}, {0, 2}}}},
-                    {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 0}, {0, 1}, {-1, 1}}}},
-                    {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
-                    {{RotationState::_L, RotationState::_0}, {{{0, 0}, {-1, -1}, {-1, 0}, {-1, 1}}}},
-                    {{RotationState::_0, RotationState::_L}, {{{0, 0}, {-1, -1}, {-1, 0}, {-2, 0}}}},
-                }},
+            {PieceType::I, {
+                               {{RotationState::_0, RotationState::_R}, {{{1, 2}, {0, 2}, {-1, 2}, {-2, 2}}}},
+                               {{RotationState::_R, RotationState::_0}, {{{-1, -2}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_R, RotationState::_2}, {{{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}}}},
+                               {{RotationState::_2, RotationState::_R}, {{{2, 2}, {1, 2}, {0, 2}, {-1, 2}}}},
+                               {{RotationState::_2, RotationState::_L}, {{{2, 1}, {1, 1}, {0, 1}, {-1, 1}}}},
+                               {{RotationState::_L, RotationState::_2}, {{{-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}}}},
+                               {{RotationState::_L, RotationState::_0}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-1, 2}}}},
+                               {{RotationState::_0, RotationState::_L}, {{{1, 1}, {0, 1}, {-1, 1}, {-2, 1}}}},
+                           }},
+            {PieceType::J, {
+                               {{RotationState::_0, RotationState::_R}, {{{0, 1}, {0, 2}, {-1, 1}, {-2, 1}}}},
+                               {{RotationState::_R, RotationState::_0}, {{{0, -1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 1}}}},
+                               {{RotationState::_2, RotationState::_R}, {{{1, 1}, {1, 2}, {0, 1}, {-1, 1}}}},
+                               {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 1}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 1}}}},
+                               {{RotationState::_L, RotationState::_0}, {{{0, -1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_0, RotationState::_L}, {{{0, 1}, {-1, 1}, {-2, 0}, {-2, 1}}}},
+                           }},
+            {PieceType::L, {
+                               {{RotationState::_0, RotationState::_R}, {{{0, -1}, {-1, -1}, {-2, -1}, {-2, 0}}}},
+                               {{RotationState::_R, RotationState::_0}, {{{0, 1}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, -1}}}},
+                               {{RotationState::_2, RotationState::_R}, {{{1, 1}, {0, 1}, {-1, 1}, {-1, 2}}}},
+                               {{RotationState::_2, RotationState::_L}, {{{1, 0}, {1, 1}, {0, 1}, {-1, 1}}}},
+                               {{RotationState::_L, RotationState::_2}, {{{-1, 0}, {-1, 1}, {-1, 2}, {-2, 0}}}},
+                               {{RotationState::_L, RotationState::_0}, {{{0, 2}, {-1, 0}, {-1, 1}, {-1, 2}}}},
+                               {{RotationState::_0, RotationState::_L}, {{{0, -2}, {0, -1}, {-1, -1}, {-2, -1}}}},
+                           }},
+            {PieceType::S, {
+                               {{RotationState::_0, RotationState::_R}, {{{0, 0}, {-1, 0}, {-1, 1}, {-2, 1}}}},
+                               {{RotationState::_R, RotationState::_0}, {{{0, 0}, {0, 1}, {-1, -1}, {-1, 0}}}},
+                               {{RotationState::_R, RotationState::_2}, {{{-1, 0}, {-1, 1}, {-2, -1}, {-2, 0}}}},
+                               {{RotationState::_2, RotationState::_R}, {{{1, 0}, {0, 0}, {0, 1}, {-1, 1}}}},
+                               {{RotationState::_2, RotationState::_L}, {{{1, -1}, {0, -1}, {0, 0}, {-1, 0}}}},
+                               {{RotationState::_L, RotationState::_2}, {{{-1, 1}, {-1, 2}, {-2, 0}, {-2, 1}}}},
+                               {{RotationState::_L, RotationState::_0}, {{{0, 1}, {0, 2}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_0, RotationState::_L}, {{{0, -1}, {-1, -1}, {-1, 0}, {-2, 0}}}},
+                           }},
+            {PieceType::Z, {
+                               {{RotationState::_0, RotationState::_R}, {{{0, 2}, {-1, 1}, {-1, 2}, {-2, 1}}}},
+                               {{RotationState::_R, RotationState::_0}, {{{0, -2}, {0, -1}, {-1, -1}, {-1, 0}}}},
+                               {{RotationState::_R, RotationState::_2}, {{{-1, -2}, {-1, -1}, {-2, -1}, {-2, 0}}}},
+                               {{RotationState::_2, RotationState::_R}, {{{1, 2}, {0, 1}, {0, 2}, {-1, 1}}}},
+                               {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 0}, {0, 1}, {-1, 0}}}},
+                               {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-2, 0}, {-2, 1}}}},
+                               {{RotationState::_L, RotationState::_0}, {{{0, -1}, {0, 0}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_0, RotationState::_L}, {{{0, 1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
+                           }},
+            {PieceType::T, {
+                               {{RotationState::_0, RotationState::_R}, {{{0, 0}, {-1, 0}, {-1, 1}, {-2, 0}}}},
+                               {{RotationState::_R, RotationState::_0}, {{{0, 0}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
+                               {{RotationState::_2, RotationState::_R}, {{{1, 1}, {0, 1}, {0, 2}, {0, 2}}}},
+                               {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 0}, {0, 1}, {-1, 1}}}},
+                               {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
+                               {{RotationState::_L, RotationState::_0}, {{{0, 0}, {-1, -1}, {-1, 0}, {-1, 1}}}},
+                               {{RotationState::_0, RotationState::_L}, {{{0, 0}, {-1, -1}, {-1, 0}, {-2, 0}}}},
+                           }},
     };
 
-    const OffsetsMap I_kick_offsets =
+    inline static const OffsetsMap I_kick_offsets =
         {
             {{RotationState::_0, RotationState::_R}, {{{-2, 0}, {1, 0}, {-2, -1}, {1, 2}}}},
-            {{RotationState::_R, RotationState::_0}, {{{-2, 0}, {-1, 0}, {2, 1}, {-1, -2}}}},
+            {{RotationState::_R, RotationState::_0}, {{{2, 0}, {-1, 0}, {2, 1}, {-1, -2}}}},
             {{RotationState::_R, RotationState::_2}, {{{-1, 0}, {2, 0}, {-1, 2}, {2, -1}}}},
             {{RotationState::_2, RotationState::_R}, {{{1, 0}, {-2, 0}, {1, -2}, {-2, 1}}}},
             {{RotationState::_2, RotationState::_L}, {{{2, 0}, {-1, 0}, {2, 1}, {-1, -2}}}},
@@ -205,95 +206,95 @@ private:
             {{RotationState::_0, RotationState::_L}, {{{-1, 0}, {2, 0}, {-1, 2}, {2, -1}}}},
     };
 
-    const OffsetsMap standard_kick_offsets =
+    inline static const OffsetsMap standard_kick_offsets =
         {
             {{RotationState::_0, RotationState::_R}, {{{-1, 0}, {-1, 1}, {0, -2}, {-1, -2}}}},
             {{RotationState::_R, RotationState::_0}, {{{1, 0}, {1, -1}, {0, 2}, {1, 2}}}},
             {{RotationState::_R, RotationState::_2}, {{{1, 0}, {1, -1}, {0, 2}, {1, 2}}}},
-            {{RotationState::_2, RotationState::_R}, {{{-1, 0}, {-1, 1}, {0, 2}, {-1, -2}}}},
+            {{RotationState::_2, RotationState::_R}, {{{-1, 0}, {-1, 1}, {0, -2}, {-1, -2}}}},
             {{RotationState::_2, RotationState::_L}, {{{1, 0}, {1, 1}, {0, -2}, {1, -2}}}},
             {{RotationState::_L, RotationState::_2}, {{{-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}}},
             {{RotationState::_L, RotationState::_0}, {{{-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}}},
             {{RotationState::_0, RotationState::_L}, {{{1, 0}, {1, 1}, {0, -2}, {1, -2}}}},
     };
 
-    const BoardLine empty_line = {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}};
+    inline static const BoardLine empty_line = {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}};
 
     TetrisBoard board = {{
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}},
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
+        empty_line,
     }};
 
-    const UpcomingPiece upcoming_I = {{
-        {{EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{piece_colors.at(I), piece_colors.at(I), piece_colors.at(I), piece_colors.at(I)}},
-        {{EMPTY, EMPTY, EMPTY, EMPTY}},
+    inline static const UpcomingPiece upcoming_I = {{
+        {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
+        {{piece_colors.at(PieceType::I), piece_colors.at(PieceType::I), piece_colors.at(PieceType::I), piece_colors.at(PieceType::I)}},
+        {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
     }};
 
-    const UpcomingPiece upcoming_O = {{
-        {{EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, piece_colors.at(O), piece_colors.at(O), EMPTY}},
-        {{EMPTY, piece_colors.at(O), piece_colors.at(O), EMPTY}},
+    inline static const UpcomingPiece upcoming_O = {{
+        {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
+        {{BSC::EMPTY, piece_colors.at(PieceType::O), piece_colors.at(PieceType::O), BSC::EMPTY}},
+        {{BSC::EMPTY, piece_colors.at(PieceType::O), piece_colors.at(PieceType::O), BSC::EMPTY}},
     }};
 
-    const UpcomingPiece upcoming_J = {{
-        {{EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{piece_colors.at(J), piece_colors.at(J), piece_colors.at(J), EMPTY}},
-        {{piece_colors.at(J), EMPTY, EMPTY, EMPTY}},
+    inline static const UpcomingPiece upcoming_J = {{
+        {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
+        {{piece_colors.at(PieceType::J), piece_colors.at(PieceType::J), piece_colors.at(PieceType::J), BSC::EMPTY}},
+        {{piece_colors.at(PieceType::J), BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
     }};
 
-    const UpcomingPiece upcoming_L = {{
-        {{EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{piece_colors.at(L), piece_colors.at(L), piece_colors.at(L), EMPTY}},
-        {{EMPTY, EMPTY, piece_colors.at(L), EMPTY}},
+    inline static const UpcomingPiece upcoming_L = {{
+        {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
+        {{piece_colors.at(PieceType::L), piece_colors.at(PieceType::L), piece_colors.at(PieceType::L), BSC::EMPTY}},
+        {{BSC::EMPTY, BSC::EMPTY, piece_colors.at(PieceType::L), BSC::EMPTY}},
     }};
 
-    const UpcomingPiece upcoming_S = {{
-        {{EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{piece_colors.at(S), piece_colors.at(S), EMPTY, EMPTY}},
-        {{EMPTY, piece_colors.at(S), piece_colors.at(S), EMPTY}},
+    inline static const UpcomingPiece upcoming_S = {{
+        {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
+        {{piece_colors.at(PieceType::S), piece_colors.at(PieceType::S), BSC::EMPTY, BSC::EMPTY}},
+        {{BSC::EMPTY, piece_colors.at(PieceType::S), piece_colors.at(PieceType::S), BSC::EMPTY}},
     }};
 
-    const UpcomingPiece upcoming_Z = {{
-        {{EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{EMPTY, piece_colors.at(Z), piece_colors.at(Z), EMPTY}},
-        {{piece_colors.at(Z), piece_colors.at(Z), EMPTY, EMPTY}},
+    inline static const UpcomingPiece upcoming_Z = {{
+        {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
+        {{BSC::EMPTY, piece_colors.at(PieceType::Z), piece_colors.at(PieceType::Z), BSC::EMPTY}},
+        {{piece_colors.at(PieceType::Z), piece_colors.at(PieceType::Z), BSC::EMPTY, BSC::EMPTY}},
     }};
 
-    const UpcomingPiece upcoming_T = {{
-        {{EMPTY, EMPTY, EMPTY, EMPTY}},
-        {{piece_colors.at(T), piece_colors.at(T), piece_colors.at(T), EMPTY}},
-        {{EMPTY, piece_colors.at(T), EMPTY, EMPTY}},
+    inline static const UpcomingPiece upcoming_T = {{
+        {{BSC::EMPTY, BSC::EMPTY, BSC::EMPTY, BSC::EMPTY}},
+        {{piece_colors.at(PieceType::T), piece_colors.at(PieceType::T), piece_colors.at(PieceType::T), BSC::EMPTY}},
+        {{BSC::EMPTY, piece_colors.at(PieceType::T), BSC::EMPTY, BSC::EMPTY}},
     }};
 
-    const std::unordered_map<PieceType, UpcomingPiece> upcoming_map = {
-        {I, upcoming_I},
-        {O, upcoming_O},
-        {J, upcoming_J},
-        {L, upcoming_L},
-        {S, upcoming_S},
-        {Z, upcoming_Z},
-        {T, upcoming_T},
+    inline static const std::unordered_map<PieceType, UpcomingPiece> upcoming_map = {
+        {PieceType::I, upcoming_I},
+        {PieceType::O, upcoming_O},
+        {PieceType::J, upcoming_J},
+        {PieceType::L, upcoming_L},
+        {PieceType::S, upcoming_S},
+        {PieceType::Z, upcoming_Z},
+        {PieceType::T, upcoming_T},
     };
 
     UpcomingBoard upcoming_board;
@@ -313,7 +314,7 @@ private:
     void initialize_falling_piece_positions(const PieceType);
     bool move_falling_piece_if_possible(MovementDirection);
     PiecePositions get_moved_positions(MovementDirection);
-    std::function<SquarePosition(SquarePosition)> get_position_modification_function(MovementDirection);
+    std::function<SquarePosition(SquarePosition)> get_position_mover_function(MovementDirection);
     void set_positions_to_color(const PiecePositions, const BoardSquareColor);
     void set_falling_piece_positions_to_one_lower();
     void get_rotated_positions_and_state(PiecePositions &, RotationState &, RotationDirection);

@@ -23,7 +23,7 @@ int TetrisGame::get_score()
     return score;
 }
 
-PieceType TetrisGame::get_held_piece()
+TetrisGame::PieceType TetrisGame::get_held_piece()
 {
     return held_piece;
 }
@@ -39,12 +39,12 @@ void TetrisGame::initialize_game()
     add_next_piece_to_board();
 }
 
-BoardSquareColor TetrisGame::get_square(const int i, const int j)
+TetrisGame::BoardSquareColor TetrisGame::get_square(const int i, const int j)
 {
     return board[i][j];
 }
 
-BoardSquareColor TetrisGame::get_upcoming_square(const int i, const int j, const int k)
+TetrisGame::BoardSquareColor TetrisGame::get_upcoming_square(const int i, const int j, const int k)
 {
     return upcoming_board[i][j][k];
 }
@@ -114,20 +114,20 @@ bool TetrisGame::move_falling_piece_if_possible(MovementDirection direction)
     return piece_moved;
 }
 
-PiecePositions TetrisGame::get_moved_positions(MovementDirection direction)
+TetrisGame::PiecePositions TetrisGame::get_moved_positions(MovementDirection direction)
 {
-    auto position_modification_function = get_position_modification_function(direction);
+    auto position_mover_function = get_position_mover_function(direction);
     PiecePositions moved_positions;
     for (int x = 0; x < falling_piece.positions.size(); x++)
     {
-        moved_positions[x] = position_modification_function(falling_piece.positions[x]);
+        moved_positions[x] = position_mover_function(falling_piece.positions[x]);
     }
     return moved_positions;
 }
 
 void TetrisGame::remove_falling_piece_from_board()
 {
-    set_positions_to_color(falling_piece.positions, EMPTY);
+    set_positions_to_color(falling_piece.positions, BSC::EMPTY);
 }
 
 void TetrisGame::add_falling_piece_to_board()
@@ -158,7 +158,7 @@ bool TetrisGame::line_is_full(int i)
 {
     for (auto square : board[i])
     {
-        if (square == EMPTY)
+        if (square == BSC::EMPTY)
         {
             return false;
         }
@@ -209,7 +209,7 @@ void TetrisGame::initialize_falling_piece_positions(const PieceType type)
     falling_piece.positions = falling_piece_initial_positions.at(type);
 }
 
-std::function<SquarePosition(SquarePosition)> TetrisGame::get_position_modification_function(MovementDirection direction)
+std::function<TetrisGame::SquarePosition(TetrisGame::SquarePosition)> TetrisGame::get_position_mover_function(MovementDirection direction)
 {
     switch (direction)
     {
@@ -269,7 +269,7 @@ void TetrisGame::rotate_right()
 
 void TetrisGame::rotate_falling_piece(RotationDirection direction)
 {
-    if (falling_piece.type == O)
+    if (falling_piece.type == PieceType::O)
     {
         return;
     }
@@ -296,7 +296,7 @@ void TetrisGame::set_falling_piece_positions_to_rotated_values(RotationDirection
 
     const auto offsets_map = get_offsets_map_for_piece_type(falling_piece.type);
 
-    for (auto [i, j] : offsets_map.at({current_rotation_state, possible_new_rotation_state}))
+    for (auto [j, i] : offsets_map.at({current_rotation_state, possible_new_rotation_state}))
     {
         positions_to_test = get_kicked_positions(possible_new_positions, i, j);
         if (test_and_set_new_positions_and_state(positions_to_test, possible_new_rotation_state))
@@ -308,7 +308,7 @@ void TetrisGame::set_falling_piece_positions_to_rotated_values(RotationDirection
 
 TetrisGame::OffsetsMap TetrisGame::get_offsets_map_for_piece_type(PieceType type)
 {
-    if (type == I)
+    if (type == PieceType::I)
     {
         return I_kick_offsets;
     }
@@ -329,7 +329,7 @@ bool TetrisGame::test_and_set_new_positions_and_state(PiecePositions positions_t
     return valid;
 }
 
-PiecePositions TetrisGame::get_kicked_positions(PiecePositions possible_new_positions, int i, int j)
+TetrisGame::PiecePositions TetrisGame::get_kicked_positions(PiecePositions possible_new_positions, int i, int j)
 {
     PiecePositions offset_positions;
     int x = 0;
@@ -347,7 +347,7 @@ bool TetrisGame::positions_are_valid(PiecePositions positions)
     {
         if (i < 0 || i >= board_height ||
             j < 0 || j >= board_width ||
-            board[i][j] != EMPTY)
+            board[i][j] != BSC::EMPTY)
         {
             return false;
         }

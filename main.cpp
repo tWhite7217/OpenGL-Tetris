@@ -71,8 +71,8 @@ GLuint hold_vertexbuffer;
 GLuint hold_uvbuffer;
 GLuint hold_normalbuffer;
 
-float ambient_component = 0.1;
-float diffuse_component = 0.85;
+float ambient_component = 0.1f;
+float diffuse_component = 0.85f;
 int specular_exponent = 10;
 
 GLuint camera_line_vertexbuffer;
@@ -104,13 +104,6 @@ std::vector<glm::vec3> spline_points;
 
 const int NUM_SPLINE_POINTS_BETWEEN_CONRTOL_POINTS = 100;
 
-extern const int board_height;
-extern const int board_width;
-
-extern const int upcoming_board_width;
-extern const int upcoming_board_lines_per_piece;
-extern const int num_upcoming_pieces_shown;
-
 TetrisGame tetris_game;
 
 bool soft_drop_is_active = false;
@@ -128,8 +121,8 @@ int soft_drop_counter = 0;
 int movement_counter = 0;
 int iteration_counter = 0;
 
-const float board_width_gl = board_width * tetris_cube_size;
-const float board_height_gl = board_height * tetris_cube_size;
+const float board_width_gl = TetrisGame::board_width * tetris_cube_size;
+const float board_height_gl = TetrisGame::board_height * tetris_cube_size;
 const float board_x_center = board_width_gl / 2;
 const float board_y_center = board_height_gl / 2;
 
@@ -169,7 +162,7 @@ void generate_and_fill_gl_buffer(GLuint &buffer, std::vector<T> buffer_data)
 	fill_gl_buffer(buffer, buffer_data);
 }
 
-void draw_object(GLuint vertexbuffer, GLuint uvbuffer, int num_vertices)
+void draw_object(GLuint vertexbuffer, GLuint uvbuffer, size_t num_vertices)
 {
 	glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
@@ -206,7 +199,7 @@ void draw_object(GLuint vertexbuffer, GLuint uvbuffer, int num_vertices)
 	glDisableVertexAttribArray(1);
 }
 
-void draw_object_with_normals(GLuint vertexbuffer, GLuint uvbuffer, GLuint normalbuffer, int num_vertices)
+void draw_object_with_normals(GLuint vertexbuffer, GLuint uvbuffer, GLuint normalbuffer, size_t num_vertices)
 {
 	// 3rd attribute buffer : normals
 	glEnableVertexAttribArray(2);
@@ -240,12 +233,12 @@ void draw_tetris_square()
 
 void draw_tetris_board()
 {
-	for (int i = 0; i < board_height; i++)
+	for (int i = 0; i < TetrisGame::board_height; i++)
 	{
-		for (int j = 0; j < board_width; j++)
+		for (int j = 0; j < TetrisGame::board_width; j++)
 		{
 			auto square = tetris_game.get_square(i, j);
-			if (square != EMPTY)
+			if (square != TetrisGame::BoardSquareColor::EMPTY)
 			{
 				glUniform1i(piece_type_flag_id, (int)square);
 				ModelMatrix = glm::translate(vec3(j * tetris_cube_size, i * tetris_cube_size, 0.0f));
@@ -268,13 +261,15 @@ void draw_held_tetris_piece()
 	glm::vec2 billboard_size;
 
 	auto held_piece_type = tetris_game.get_held_piece();
+
+	using PT = TetrisGame::PieceType;
 	switch (held_piece_type)
 	{
-	case I:
+	case PT::I:
 		billboard_size = glm::vec2(2, 1.5);
 		current_texture = I_billboard_texture;
 		break;
-	case O:
+	case PT::O:
 		billboard_size = glm::vec2(1.3, 3);
 		current_texture = O_billboard_texture;
 		break;
@@ -282,19 +277,19 @@ void draw_held_tetris_piece()
 		billboard_size = glm::vec2(2, 3);
 		switch (held_piece_type)
 		{
-		case J:
+		case PT::J:
 			current_texture = J_billboard_texture;
 			break;
-		case L:
+		case PT::L:
 			current_texture = L_billboard_texture;
 			break;
-		case S:
+		case PT::S:
 			current_texture = S_billboard_texture;
 			break;
-		case Z:
+		case PT::Z:
 			current_texture = Z_billboard_texture;
 			break;
-		case T:
+		case PT::T:
 			current_texture = T_billboard_texture;
 			break;
 		default:
@@ -321,45 +316,45 @@ void draw_held_tetris_piece()
 
 void draw_upcoming_pieces(float y_offset)
 {
-	for (int i = 0; i < num_upcoming_pieces_shown; i++)
+	for (int i = 0; i < TetrisGame::num_upcoming_pieces_shown; i++)
 	{
-		for (int j = 0; j < upcoming_board_lines_per_piece; j++)
+		for (int j = 0; j < TetrisGame::upcoming_board_lines_per_piece; j++)
 		{
-			for (int k = 0; k < upcoming_board_width; k++)
+			for (int k = 0; k < TetrisGame::upcoming_board_width; k++)
 			{
+				using BSC = TetrisGame::BoardSquareColor;
 				auto square = tetris_game.get_upcoming_square(i, j, k);
-				if (square != EMPTY)
+				if (square != BSC::EMPTY)
 				{
 					glActiveTexture(GL_TEXTURE0);
 					switch (square)
 					{
-					case LIGHT_BLUE:
+					case BSC::LIGHT_BLUE:
 						glBindTexture(GL_TEXTURE_2D, light_blue_texture);
 						break;
-					case DARK_BLUE:
+					case BSC::DARK_BLUE:
 						glBindTexture(GL_TEXTURE_2D, dark_blue_texture);
 						break;
-					case GREEN:
+					case BSC::GREEN:
 						glBindTexture(GL_TEXTURE_2D, green_texture);
 						break;
-					case YELLOW:
+					case BSC::YELLOW:
 						glBindTexture(GL_TEXTURE_2D, yellow_texture);
 						break;
-					case ORANGE:
+					case BSC::ORANGE:
 						glBindTexture(GL_TEXTURE_2D, orange_texture);
 						break;
-					case RED:
+					case BSC::RED:
 						glBindTexture(GL_TEXTURE_2D, red_texture);
 						break;
-					case MAGENTA:
+					case BSC::MAGENTA:
 						glBindTexture(GL_TEXTURE_2D, purple_texture);
 						break;
 					}
 					glUniform1i(TextureID, 0);
 					glUniform1i(piece_type_flag_id, -1);
-					// ModelMatrix = glm::translate(vec3(j * tetris_cube_size, i * tetris_cube_size, 0.0f));
-					float x = (k + board_width * 5 / 4) * tetris_cube_size;
-					float y = board_height * tetris_cube_size - (num_upcoming_pieces_shown - i - 1) * upcoming_board_lines_per_piece * tetris_cube_size + j * tetris_cube_size - y_offset;
+					float x = (k + TetrisGame::board_width * 5 / 4) * tetris_cube_size;
+					float y = board_height_gl - (TetrisGame::num_upcoming_pieces_shown - i - 1) * TetrisGame::upcoming_board_lines_per_piece * tetris_cube_size + j * tetris_cube_size - y_offset;
 					ModelMatrix = glm::translate(vec3(x, y, 0.0f));
 					draw_tetris_square();
 				}
@@ -497,25 +492,25 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 		else if (key == GLFW_KEY_INSERT)
 		{
-			ambient_component += 0.01;
+			ambient_component += 0.01f;
 			ambient_component = std::min(1.0f, ambient_component);
 			std::cout << ambient_component << "\n";
 		}
 		else if (key == GLFW_KEY_DELETE)
 		{
-			ambient_component -= 0.01;
+			ambient_component -= 0.01f;
 			ambient_component = std::max(0.0f, ambient_component);
 			std::cout << ambient_component << "\n";
 		}
 		else if (key == GLFW_KEY_HOME)
 		{
-			diffuse_component += 0.02;
+			diffuse_component += 0.02f;
 			diffuse_component = std::min(1.0f, diffuse_component);
 			std::cout << diffuse_component << "\n";
 		}
 		else if (key == GLFW_KEY_END)
 		{
-			diffuse_component -= 0.02;
+			diffuse_component -= 0.02f;
 			diffuse_component = std::max(0.0f, diffuse_component);
 			std::cout << diffuse_component << "\n";
 		}
