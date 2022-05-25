@@ -91,15 +91,8 @@ void TetrisGame::add_seven_pieces_to_queue()
 
 void TetrisGame::iterate_time()
 {
-    // if (game_is_over())
-    // {
-    //     end_game();
-    // } else
-    if (falling_piece_can_move(MovementDirection::DOWN))
-    {
-        move_falling_piece(MovementDirection::DOWN);
-    }
-    else
+    bool falling_piece_moved_down = move_falling_piece_if_possible(MovementDirection::DOWN);
+    if (!falling_piece_moved_down)
     {
         clear_any_full_lines();
         add_next_piece_to_board();
@@ -112,24 +105,24 @@ void TetrisGame::iterate_time()
     }
 }
 
-bool TetrisGame::falling_piece_can_move(const MovementDirection direction)
+bool TetrisGame::move_falling_piece_if_possible(MovementDirection direction)
 {
-    auto square_movement_is_possible = get_checker_function(direction);
-
     remove_falling_piece_from_board();
-
-    bool result = true;
-    for (const auto [i, j] : falling_piece.positions)
-    {
-        if (square_movement_is_possible(i, j))
-        {
-            result = false;
-            break;
-        }
-    }
-
+    auto positions_to_test = get_moved_positions(direction);
+    bool piece_moved = test_and_set_new_positions_and_state(positions_to_test, falling_piece.rotation_state);
     add_falling_piece_to_board();
-    return result;
+    return piece_moved;
+}
+
+PiecePositions TetrisGame::get_moved_positions(MovementDirection direction)
+{
+    auto position_modification_function = get_position_modification_function(direction);
+    PiecePositions moved_positions;
+    for (int x = 0; x < falling_piece.positions.size(); x++)
+    {
+        moved_positions[x] = position_modification_function(falling_piece.positions[x]);
+    }
+    return moved_positions;
 }
 
 void TetrisGame::remove_falling_piece_from_board()
@@ -141,26 +134,6 @@ void TetrisGame::add_falling_piece_to_board()
 {
     BoardSquareColor piece_color = piece_colors.at(falling_piece.type);
     set_positions_to_color(falling_piece.positions, piece_color);
-}
-
-std::function<bool(const int, const int)> TetrisGame::get_checker_function(const MovementDirection direction)
-{
-    using MD = MovementDirection;
-
-    switch (direction)
-    {
-    case MD::LEFT:
-        return [this](const int i, const int j)
-        { return (j == 0) || (board[i][j - 1] != EMPTY); };
-    case MD::RIGHT:
-        return [this](const int i, const int j)
-        { return (j == (board_width - 1)) || (board[i][j + 1] != EMPTY); };
-    case MD::DOWN:
-        return [this](const int i, const int j)
-        { return (i == 0) || (board[i - 1][j] != EMPTY); };
-    default:
-        exit(1);
-    }
 }
 
 void TetrisGame::clear_any_full_lines()
@@ -236,30 +209,19 @@ void TetrisGame::initialize_falling_piece_positions(const PieceType type)
     falling_piece.positions = falling_piece_initial_positions.at(type);
 }
 
-void TetrisGame::move_falling_piece(MovementDirection direction)
-{
-    remove_falling_piece_from_board();
-    auto position_modification_function = get_position_modification_function(direction);
-    for (int x = 0; x < falling_piece.positions.size(); x++)
-    {
-        position_modification_function(falling_piece.positions[x]);
-    }
-    add_falling_piece_to_board();
-}
-
-std::function<void(SquarePosition &)> TetrisGame::get_position_modification_function(MovementDirection direction)
+std::function<SquarePosition(SquarePosition)> TetrisGame::get_position_modification_function(MovementDirection direction)
 {
     switch (direction)
     {
     case MovementDirection::LEFT:
-        return [](SquarePosition &position)
-        { position.second--; };
+        return [](SquarePosition position)
+        { return SquarePosition{position.first, position.second - 1}; };
     case MovementDirection::RIGHT:
-        return [](SquarePosition &position)
-        { position.second++; };
+        return [](SquarePosition position)
+        { return SquarePosition{position.first, position.second + 1}; };
     case MovementDirection::DOWN:
-        return [](SquarePosition &position)
-        { position.first--; };
+        return [](SquarePosition position)
+        { return SquarePosition{position.first - 1, position.second}; };
     }
 }
 
@@ -273,19 +235,12 @@ void TetrisGame::set_positions_to_color(const PiecePositions positions, const Bo
 
 void TetrisGame::handle_left_input()
 {
-
-    if (falling_piece_can_move(MovementDirection::LEFT))
-    {
-        move_falling_piece(MovementDirection::LEFT);
-    }
+    move_falling_piece_if_possible(MovementDirection::LEFT);
 }
 
 void TetrisGame::handle_right_input()
 {
-    if (falling_piece_can_move(MovementDirection::RIGHT))
-    {
-        move_falling_piece(MovementDirection::RIGHT);
-    }
+    move_falling_piece_if_possible(MovementDirection::RIGHT);
 }
 
 void TetrisGame::soft_drop()
@@ -295,9 +250,9 @@ void TetrisGame::soft_drop()
 
 void TetrisGame::hard_drop()
 {
-    while (falling_piece_can_move(MovementDirection::DOWN))
+    while (move_falling_piece_if_possible(MovementDirection::DOWN))
     {
-        move_falling_piece(MovementDirection::DOWN);
+        ;
     }
     iterate_time();
 }
@@ -365,7 +320,7 @@ TetrisGame::OffsetsMap TetrisGame::get_offsets_map_for_piece_type(PieceType type
 
 bool TetrisGame::test_and_set_new_positions_and_state(PiecePositions positions_to_test, RotationState new_rotation_state)
 {
-    bool valid = new_positions_are_valid(positions_to_test);
+    bool valid = positions_are_valid(positions_to_test);
     if (valid)
     {
         falling_piece.positions = positions_to_test;
@@ -386,7 +341,7 @@ PiecePositions TetrisGame::get_kicked_positions(PiecePositions possible_new_posi
     return offset_positions;
 }
 
-bool TetrisGame::new_positions_are_valid(PiecePositions positions)
+bool TetrisGame::positions_are_valid(PiecePositions positions)
 {
     for (auto [i, j] : positions)
     {

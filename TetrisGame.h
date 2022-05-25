@@ -301,8 +301,7 @@ private:
     void initialize_game();
     void update_upcoming_board();
     void add_seven_pieces_to_queue();
-    bool falling_piece_can_move(const MovementDirection);
-    std::function<bool(const int, const int)> get_checker_function(const MovementDirection);
+    std::function<bool(const int, const int)> get_movement_checker_function(const MovementDirection);
     void remove_falling_piece_from_board();
     void add_falling_piece_to_board();
     void clear_any_full_lines();
@@ -312,11 +311,9 @@ private:
     void add_next_piece_to_board();
     void add_piece_to_board(PieceType);
     void initialize_falling_piece_positions(const PieceType);
-    // void move_falling_piece_down();
-    // void move_falling_piece_left();
-    // void move_falling_piece_right();
-    void move_falling_piece(MovementDirection);
-    std::function<void(SquarePosition &)> get_position_modification_function(MovementDirection);
+    bool move_falling_piece_if_possible(MovementDirection);
+    PiecePositions get_moved_positions(MovementDirection);
+    std::function<SquarePosition(SquarePosition)> get_position_modification_function(MovementDirection);
     void set_positions_to_color(const PiecePositions, const BoardSquareColor);
     void set_falling_piece_positions_to_one_lower();
     void get_rotated_positions_and_state(PiecePositions &, RotationState &, RotationDirection);
@@ -325,6 +322,7 @@ private:
     void set_falling_piece_positions_to_rotated_values(RotationDirection);
     PiecePositions get_kicked_positions(PiecePositions, int, int);
     bool test_and_set_new_positions_and_state(PiecePositions, RotationState);
-    bool new_positions_are_valid(PiecePositions);
+    bool test_and_set_new_positions(PiecePositions);
+    bool positions_are_valid(PiecePositions);
     OffsetsMap get_offsets_map_for_piece_type(PieceType);
 };
