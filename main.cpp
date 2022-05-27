@@ -105,7 +105,7 @@ const float light_pos_delta = 3.0f;
 
 int soft_drop_counter = 0;
 int movement_counter = 0;
-int iteration_counter = 0;
+int sub_iteration_counter = 0;
 
 const float board_width_gl = TetrisGame::board_width * tetris_cube_size;
 const float board_height_gl = TetrisGame::board_height * tetris_cube_size;
@@ -459,7 +459,7 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 			tetris_game.soft_drop();
 			soft_drop_is_active = true;
 			soft_drop_counter = 0;
-			iteration_counter = 0;
+			sub_iteration_counter = 0;
 			break;
 		case GLFW_KEY_S:
 			tetris_game.hard_drop();
@@ -585,7 +585,7 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow(1024, 768, "Tutorial 07 - Model Loading", NULL, NULL);
+	window = glfwCreateWindow(1024, 768, "OpenGL Tetris", NULL, NULL);
 	if (window == NULL)
 	{
 		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
@@ -689,6 +689,8 @@ int main(void)
 
 	float position_fraction;
 
+	ViewMatrix = glm::lookAt(position, center, up);
+
 	do
 	{
 		// Clear the screen
@@ -696,8 +698,6 @@ int main(void)
 
 		// Use our shader
 		glUseProgram(programID);
-
-		ViewMatrix = glm::lookAt(position, center, up);
 
 		auto currentTime = std::chrono::system_clock::now();
 		auto deltaTime = currentTime - lastTime;
@@ -709,6 +709,7 @@ int main(void)
 			time_since_camera_change_started += deltaTimeInMS;
 			position_fraction = float(time_since_camera_change_started.count()) / float(time_between_camera_positions.count());
 			position = (1.0f - position_fraction) * original_position + position_fraction * destination_position;
+			ViewMatrix = glm::lookAt(position, center, up);
 		}
 
 		y_offset_timer += deltaTimeInMS;
@@ -746,7 +747,7 @@ int main(void)
 
 		if (time_since_last_sub_iteration > sub_iteration_time)
 		{
-			iteration_counter++;
+			sub_iteration_counter++;
 
 			if (soft_drop_is_active)
 			{
@@ -754,12 +755,12 @@ int main(void)
 				if (soft_drop_counter == sub_iterations_per_soft_drop)
 				{
 					soft_drop_counter = 0;
-					iteration_counter = 0;
+					sub_iteration_counter = 0;
 					tetris_game.soft_drop();
 				}
 			}
 
-			if (!(left_is_active && right_is_active) && (left_is_active || right_is_active))
+			if (left_is_active ^ right_is_active)
 			{
 				movement_counter++;
 				if (movement_counter == sub_iterations_per_movement)
@@ -776,9 +777,9 @@ int main(void)
 				}
 			}
 
-			if (iteration_counter == sub_iterations_per_iteration)
+			if (sub_iteration_counter == sub_iterations_per_iteration)
 			{
-				iteration_counter = 0;
+				sub_iteration_counter = 0;
 				tetris_game.iterate_time();
 			}
 
