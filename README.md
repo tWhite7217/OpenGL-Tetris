@@ -58,11 +58,11 @@ G moves the camera to a side view specifically included to show that the current
 
 [Images for the held piece billboards.][held_pieces]
 
-
-
-
+All textures for the upcoming pieces from [Pixabay] under the [Pixabay License].
 
 [tutorials]: https://www.opengl-tutorial.org/
 [The Tetris Guideline]: https://tetris.wiki/Tetris_Guideline
 [held_pieces]: https://commons.wikimedia.org/wiki/Category:Tetrominoes
-[blender]: https://www.blender.org/
+[Blender]: https://www.blender.org/
+[Pixabay]: https://pixabay.com/
+[Pixabay License]: https://pixabay.com/service/license/
