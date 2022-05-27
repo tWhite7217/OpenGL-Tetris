@@ -412,23 +412,20 @@ void draw_scoreboard(int score)
 	int tens = (score / 10) % 10;
 	int ones = score % 10;
 
-	if (thousands != 0)
-	{
-		draw_scoreboard_digit(3, thousands);
-		draw_scoreboard_digit(2, hundreds);
-		draw_scoreboard_digit(1, tens);
-	}
-	else if (hundreds != 0)
-	{
-		draw_scoreboard_digit(2, hundreds);
-		draw_scoreboard_digit(1, tens);
-	}
-	else if (tens != 0)
-	{
-		draw_scoreboard_digit(1, tens);
-	}
+	int num_digits_to_draw =
+		thousands ? 4 : (hundreds ? 3 : (tens ? 2 : 1));
 
-	draw_scoreboard_digit(0, ones);
+	switch (num_digits_to_draw)
+	{
+	case 4:
+		draw_scoreboard_digit(3, thousands);
+	case 3:
+		draw_scoreboard_digit(2, hundreds);
+	case 2:
+		draw_scoreboard_digit(1, tens);
+	default:
+		draw_scoreboard_digit(0, ones);
+	}
 }
 
 void begin_moving_camera_to(glm::vec3 new_position)
