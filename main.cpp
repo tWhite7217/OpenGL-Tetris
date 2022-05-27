@@ -27,7 +27,7 @@ using namespace glm;
 
 using namespace std::chrono_literals;
 
-GLuint Texture;
+GLuint ssd_digit_texture;
 GLuint light_blue_texture;
 GLuint dark_blue_texture;
 GLuint yellow_texture;
@@ -35,7 +35,6 @@ GLuint orange_texture;
 GLuint red_texture;
 GLuint purple_texture;
 GLuint green_texture;
-
 GLuint I_billboard_texture;
 GLuint J_billboard_texture;
 GLuint L_billboard_texture;
@@ -59,23 +58,9 @@ GLuint billboard_size_id;
 GLuint camera_up_id;
 GLuint camera_right_id;
 
-GLuint tetris_square_vertexbuffer;
-GLuint tetris_square_uvbuffer;
-GLuint tetris_square_normalbuffer;
-
-GLuint scoreboard_vertexbuffer;
-GLuint scoreboard_uvbuffer;
-GLuint scoreboard_normalbuffer;
-
-GLuint hold_vertexbuffer;
-GLuint hold_uvbuffer;
-GLuint hold_normalbuffer;
-
 float ambient_component = 0.1f;
 float diffuse_component = 0.85f;
 int specular_exponent = 10;
-
-GLuint camera_line_vertexbuffer;
 
 GLuint piece_type_flag_id;
 GLuint use_lighting_flag_id;
@@ -84,31 +69,19 @@ GLuint use_mvp_flag_id;
 std::vector<GLuint> active_buffers;
 std::vector<GLuint> active_textures;
 
-// typedef struct OBJData
-// {
-// 	std::vector<glm::vec3> vertices;
-// 	std::vector<glm::vec2> uvs;
-// 	std::vector<glm::vec3> normals;
-// 	GLuint vertex_buffer;
-// 	GLuint uv_buffer;
-// 	GLuint normal_buffer;
-// };
+typedef struct OBJData
+{
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> normals;
+	GLuint vertex_buffer;
+	GLuint uv_buffer;
+	GLuint normal_buffer;
+};
 
-// OBJData tetris_square_obj;
-// OBJData scoreboard_obj;
-// OBJData hold_obj;
-
-std::vector<glm::vec3> tetris_square_vertices;
-std::vector<glm::vec2> tetris_square_uvs;
-std::vector<glm::vec3> tetris_square_normals;
-
-std::vector<glm::vec3> scoreboard_vertices;
-std::vector<glm::vec2> scoreboard_uvs;
-std::vector<glm::vec3> scoreboard_normals;
-
-std::vector<glm::vec3> hold_vertices;
-std::vector<glm::vec2> hold_uvs;
-std::vector<glm::vec3> hold_normals;
+OBJData tetris_square_obj;
+OBJData scoreboard_obj;
+OBJData hold_obj;
 
 glm::mat4 ModelMatrix;
 glm::mat4 ViewMatrix;
@@ -116,10 +89,6 @@ glm::mat4 ProjectionMatrix;
 
 bool camera_path_is_shown = false;
 bool camera_paused = false;
-
-std::vector<glm::vec3> spline_points;
-
-const int NUM_SPLINE_POINTS_BETWEEN_CONRTOL_POINTS = 100;
 
 TetrisGame tetris_game;
 
@@ -191,12 +160,12 @@ void generate_and_fill_gl_buffer(GLuint &buffer, std::vector<T> buffer_data)
 	fill_gl_buffer(buffer, buffer_data);
 }
 
-void loadOBJ_into_vectors_and_buffers(std::string filename, std::vector<glm::vec3> &vertices, std::vector<glm::vec2> &uvs, std::vector<glm::vec3> &normals, GLuint &vertexbuffer, GLuint &uvbuffer, GLuint &normalbuffer)
+void loadOBJ_into_vectors_and_buffers(std::string filename, OBJData &obj_data)
 {
-	loadOBJ(filename.c_str(), vertices, uvs, normals);
-	generate_and_fill_gl_buffer(vertexbuffer, vertices);
-	generate_and_fill_gl_buffer(uvbuffer, uvs);
-	generate_and_fill_gl_buffer(normalbuffer, normals);
+	loadOBJ(filename.c_str(), obj_data.vertices, obj_data.uvs, obj_data.normals);
+	generate_and_fill_gl_buffer(obj_data.vertex_buffer, obj_data.vertices);
+	generate_and_fill_gl_buffer(obj_data.uv_buffer, obj_data.uvs);
+	generate_and_fill_gl_buffer(obj_data.normal_buffer, obj_data.normals);
 }
 
 void draw_object(GLuint vertexbuffer, GLuint uvbuffer, size_t num_vertices)
@@ -265,7 +234,7 @@ void draw_tetris_square()
 
 	glUniform1i(use_lighting_flag_id, 1);
 
-	draw_object_with_normals(tetris_square_vertexbuffer, tetris_square_uvbuffer, tetris_square_normalbuffer, tetris_square_vertices.size());
+	draw_object_with_normals(tetris_square_obj.vertex_buffer, tetris_square_obj.uv_buffer, tetris_square_obj.normal_buffer, tetris_square_obj.vertices.size());
 }
 
 void draw_tetris_board()
@@ -348,7 +317,7 @@ void draw_held_tetris_piece()
 	glUniform1i(use_lighting_flag_id, 0);
 	glUniform1i(use_mvp_flag_id, 1);
 
-	draw_object(hold_vertexbuffer, hold_uvbuffer, hold_vertices.size());
+	draw_object(hold_obj.vertex_buffer, hold_obj.uv_buffer, hold_obj.vertices.size());
 }
 
 void draw_upcoming_pieces(float y_offset)
@@ -405,7 +374,7 @@ void draw_scoreboard_digit(int digit_place, int digit_value)
 	ModelMatrix = glm::translate(vec3(0.95f - (digit_place * 0.085f), -0.9f, -0.5f)) * glm::scale(vec3(0.06f, 0.09f, 0.06f));
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, Texture);
+	glBindTexture(GL_TEXTURE_2D, ssd_digit_texture);
 	glUniform1i(texture_sampler_id, 0);
 
 	glUniform1i(piece_type_flag_id, -1);
@@ -426,14 +395,14 @@ void draw_scoreboard_digit(int digit_place, int digit_value)
 		displacement_y = (digit_value - 1) / 5;
 	}
 
-	for (auto xy : scoreboard_uvs)
+	for (auto xy : scoreboard_obj.uvs)
 	{
 		current_uvs.push_back(glm::vec2(xy.x + (0.2 * displacement_x), xy.y - (0.5 * displacement_y)));
 	}
 
-	fill_gl_buffer(scoreboard_uvbuffer, current_uvs);
+	fill_gl_buffer(scoreboard_obj.uv_buffer, current_uvs);
 
-	draw_object(scoreboard_vertexbuffer, scoreboard_uvbuffer, scoreboard_vertices.size());
+	draw_object(scoreboard_obj.vertex_buffer, scoreboard_obj.uv_buffer, scoreboard_obj.vertices.size());
 }
 
 void draw_scoreboard(int score)
@@ -675,8 +644,7 @@ int main(void)
 	camera_up_id = glGetUniformLocation(programID, "camera_up_worldspace");
 	camera_right_id = glGetUniformLocation(programID, "camera_right_worldspace");
 
-	load_texture(Texture, "SSD_Numbers.DDS");
-	// light_blue_texture = loadDDS("light_blue_texture.DDS");
+	load_texture(ssd_digit_texture, "SSD_Numbers.DDS");
 	load_texture(light_blue_texture, "light_blue_texture.DDS");
 	load_texture(dark_blue_texture, "dark_blue_texture.DDS");
 	load_texture(yellow_texture, "yellow_texture.DDS");
@@ -697,9 +665,9 @@ int main(void)
 	use_lighting_flag_id = glGetUniformLocation(programID, "use_lighting");
 	use_mvp_flag_id = glGetUniformLocation(programID, "use_mvp");
 
-	loadOBJ_into_vectors_and_buffers("tetris_cube_more_beveled.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals, tetris_square_vertexbuffer, tetris_square_uvbuffer, tetris_square_normalbuffer);
-	loadOBJ_into_vectors_and_buffers("SSD_Digit.obj", scoreboard_vertices, scoreboard_uvs, scoreboard_normals, scoreboard_vertexbuffer, scoreboard_uvbuffer, scoreboard_normalbuffer);
-	loadOBJ_into_vectors_and_buffers("hold.obj", hold_vertices, hold_uvs, hold_normals, hold_vertexbuffer, hold_uvbuffer, hold_normalbuffer);
+	loadOBJ_into_vectors_and_buffers("tetris_cube_more_beveled.obj", tetris_square_obj);
+	loadOBJ_into_vectors_and_buffers("SSD_Digit.obj", scoreboard_obj);
+	loadOBJ_into_vectors_and_buffers("hold.obj", hold_obj);
 
 	auto lastTime = std::chrono::system_clock::now();
 
