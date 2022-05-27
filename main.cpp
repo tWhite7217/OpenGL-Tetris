@@ -44,7 +44,7 @@ GLuint S_billboard_texture;
 GLuint Z_billboard_texture;
 GLuint T_billboard_texture;
 
-GLuint TextureID;
+GLuint texture_sampler_id;
 GLuint MVPMatrixID;
 GLuint MMatrixID;
 GLuint VMatrixID;
@@ -80,6 +80,23 @@ GLuint camera_line_vertexbuffer;
 GLuint piece_type_flag_id;
 GLuint use_lighting_flag_id;
 GLuint use_mvp_flag_id;
+
+std::vector<GLuint> active_buffers;
+std::vector<GLuint> active_textures;
+
+// typedef struct OBJData
+// {
+// 	std::vector<glm::vec3> vertices;
+// 	std::vector<glm::vec2> uvs;
+// 	std::vector<glm::vec3> normals;
+// 	GLuint vertex_buffer;
+// 	GLuint uv_buffer;
+// 	GLuint normal_buffer;
+// };
+
+// OBJData tetris_square_obj;
+// OBJData scoreboard_obj;
+// OBJData hold_obj;
 
 std::vector<glm::vec3> tetris_square_vertices;
 std::vector<glm::vec2> tetris_square_uvs;
@@ -148,6 +165,18 @@ glm::vec3 position = camera_positions[4];
 glm::vec3 original_position = camera_positions[4];
 glm::vec3 destination_position = camera_positions[4];
 
+void load_texture(GLuint &texture_pointer, std::string filename)
+{
+	texture_pointer = loadDDS(filename.c_str());
+	active_textures.push_back(texture_pointer);
+}
+
+void generate_gl_buffer(GLuint &buffer)
+{
+	glGenBuffers(1, &buffer);
+	active_buffers.push_back(buffer);
+}
+
 template <typename T>
 void fill_gl_buffer(GLuint buffer, std::vector<T> buffer_data)
 {
@@ -158,8 +187,16 @@ void fill_gl_buffer(GLuint buffer, std::vector<T> buffer_data)
 template <typename T>
 void generate_and_fill_gl_buffer(GLuint &buffer, std::vector<T> buffer_data)
 {
-	glGenBuffers(1, &buffer);
+	generate_gl_buffer(buffer);
 	fill_gl_buffer(buffer, buffer_data);
+}
+
+void loadOBJ_into_vectors_and_buffers(std::string filename, std::vector<glm::vec3> &vertices, std::vector<glm::vec2> &uvs, std::vector<glm::vec3> &normals, GLuint &vertexbuffer, GLuint &uvbuffer, GLuint &normalbuffer)
+{
+	loadOBJ(filename.c_str(), vertices, uvs, normals);
+	generate_and_fill_gl_buffer(vertexbuffer, vertices);
+	generate_and_fill_gl_buffer(uvbuffer, uvs);
+	generate_and_fill_gl_buffer(normalbuffer, normals);
 }
 
 void draw_object(GLuint vertexbuffer, GLuint uvbuffer, size_t num_vertices)
@@ -305,7 +342,7 @@ void draw_held_tetris_piece()
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, current_texture);
-	glUniform1i(TextureID, 0);
+	glUniform1i(texture_sampler_id, 0);
 
 	glUniform1i(piece_type_flag_id, -1);
 	glUniform1i(use_lighting_flag_id, 0);
@@ -351,7 +388,7 @@ void draw_upcoming_pieces(float y_offset)
 						glBindTexture(GL_TEXTURE_2D, purple_texture);
 						break;
 					}
-					glUniform1i(TextureID, 0);
+					glUniform1i(texture_sampler_id, 0);
 					glUniform1i(piece_type_flag_id, -1);
 					float x = (k + TetrisGame::board_width * 5 / 4) * tetris_cube_size;
 					float y = board_height_gl - (TetrisGame::num_upcoming_pieces_shown - i - 1) * TetrisGame::upcoming_board_lines_per_piece * tetris_cube_size + j * tetris_cube_size - y_offset;
@@ -369,7 +406,7 @@ void draw_scoreboard_digit(int digit_place, int digit_value)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, Texture);
-	glUniform1i(TextureID, 0);
+	glUniform1i(texture_sampler_id, 0);
 
 	glUniform1i(piece_type_flag_id, -1);
 	glUniform1i(use_lighting_flag_id, 0);
@@ -552,7 +589,7 @@ void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods
 	{
 		switch (key)
 		{
-		GLFW_KEY_W:
+		case GLFW_KEY_W:
 			soft_drop_is_active = false;
 			break;
 		case GLFW_KEY_A:
@@ -625,7 +662,6 @@ int main(void)
 	// Create and compile our GLSL program from the shaders
 	GLuint programID = LoadShaders("TransformVertexShader.glsl", "TextureFragmentShader.glsl");
 
-	// Get a handle for our "MVP" uniform
 	MVPMatrixID = glGetUniformLocation(programID, "MVP");
 	MMatrixID = glGetUniformLocation(programID, "M");
 	VMatrixID = glGetUniformLocation(programID, "V");
@@ -639,43 +675,31 @@ int main(void)
 	camera_up_id = glGetUniformLocation(programID, "camera_up_worldspace");
 	camera_right_id = glGetUniformLocation(programID, "camera_right_worldspace");
 
-	// Load the texture
-	Texture = loadDDS("SSD_Numbers.DDS");
-	light_blue_texture = loadDDS("light_blue_texture.DDS");
-	dark_blue_texture = loadDDS("dark_blue_texture.DDS");
-	yellow_texture = loadDDS("yellow_texture.DDS");
-	orange_texture = loadDDS("orange_texture.DDS");
-	red_texture = loadDDS("red_texture.DDS");
-	purple_texture = loadDDS("purple_texture.DDS");
-	green_texture = loadDDS("green_texture.DDS");
-	I_billboard_texture = loadDDS("I_billboard.DDS");
-	J_billboard_texture = loadDDS("J_billboard.DDS");
-	L_billboard_texture = loadDDS("L_billboard.DDS");
-	O_billboard_texture = loadDDS("O_billboard.DDS");
-	S_billboard_texture = loadDDS("S_billboard.DDS");
-	Z_billboard_texture = loadDDS("Z_billboard.DDS");
-	T_billboard_texture = loadDDS("T_billboard.DDS");
+	load_texture(Texture, "SSD_Numbers.DDS");
+	// light_blue_texture = loadDDS("light_blue_texture.DDS");
+	load_texture(light_blue_texture, "light_blue_texture.DDS");
+	load_texture(dark_blue_texture, "dark_blue_texture.DDS");
+	load_texture(yellow_texture, "yellow_texture.DDS");
+	load_texture(orange_texture, "orange_texture.DDS");
+	load_texture(red_texture, "red_texture.DDS");
+	load_texture(purple_texture, "purple_texture.DDS");
+	load_texture(green_texture, "green_texture.DDS");
+	load_texture(I_billboard_texture, "I_billboard.DDS");
+	load_texture(J_billboard_texture, "J_billboard.DDS");
+	load_texture(L_billboard_texture, "L_billboard.DDS");
+	load_texture(O_billboard_texture, "O_billboard.DDS");
+	load_texture(S_billboard_texture, "S_billboard.DDS");
+	load_texture(Z_billboard_texture, "Z_billboard.DDS");
+	load_texture(T_billboard_texture, "T_billboard.DDS");
 
-	// Get a handle for our "myTextureSampler" uniform
-	TextureID = glGetUniformLocation(programID, "textureSampler");
+	texture_sampler_id = glGetUniformLocation(programID, "textureSampler");
 	piece_type_flag_id = glGetUniformLocation(programID, "piece_type");
 	use_lighting_flag_id = glGetUniformLocation(programID, "use_lighting");
 	use_mvp_flag_id = glGetUniformLocation(programID, "use_mvp");
 
-	loadOBJ("tetris_cube_more_beveled.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals);
-	generate_and_fill_gl_buffer(tetris_square_vertexbuffer, tetris_square_vertices);
-	generate_and_fill_gl_buffer(tetris_square_uvbuffer, tetris_square_uvs);
-	generate_and_fill_gl_buffer(tetris_square_normalbuffer, tetris_square_normals);
-
-	loadOBJ("SSD_Digit.obj", scoreboard_vertices, scoreboard_uvs, scoreboard_normals);
-	generate_and_fill_gl_buffer(scoreboard_vertexbuffer, scoreboard_vertices);
-	glGenBuffers(1, &scoreboard_uvbuffer);
-	generate_and_fill_gl_buffer(scoreboard_normalbuffer, scoreboard_normals);
-
-	loadOBJ("hold.obj", hold_vertices, hold_uvs, hold_normals);
-	generate_and_fill_gl_buffer(hold_vertexbuffer, hold_vertices);
-	generate_and_fill_gl_buffer(hold_uvbuffer, hold_uvs);
-	generate_and_fill_gl_buffer(hold_normalbuffer, hold_normals);
+	loadOBJ_into_vectors_and_buffers("tetris_cube_more_beveled.obj", tetris_square_vertices, tetris_square_uvs, tetris_square_normals, tetris_square_vertexbuffer, tetris_square_uvbuffer, tetris_square_normalbuffer);
+	loadOBJ_into_vectors_and_buffers("SSD_Digit.obj", scoreboard_vertices, scoreboard_uvs, scoreboard_normals, scoreboard_vertexbuffer, scoreboard_uvbuffer, scoreboard_normalbuffer);
+	loadOBJ_into_vectors_and_buffers("hold.obj", hold_vertices, hold_uvs, hold_normals, hold_vertexbuffer, hold_uvbuffer, hold_normalbuffer);
 
 	auto lastTime = std::chrono::system_clock::now();
 
@@ -801,32 +825,9 @@ int main(void)
 		   glfwWindowShouldClose(window) == 0);
 
 	// Cleanup VBO and shader
-	glDeleteBuffers(1, &tetris_square_vertexbuffer);
-	glDeleteBuffers(1, &tetris_square_uvbuffer);
-	glDeleteBuffers(1, &tetris_square_normalbuffer);
-	glDeleteBuffers(1, &scoreboard_vertexbuffer);
-	glDeleteBuffers(1, &scoreboard_uvbuffer);
-	glDeleteBuffers(1, &scoreboard_normalbuffer);
-	glDeleteBuffers(1, &hold_vertexbuffer);
-	glDeleteBuffers(1, &hold_uvbuffer);
-	glDeleteBuffers(1, &hold_normalbuffer);
-	glDeleteBuffers(1, &camera_line_vertexbuffer);
+	glDeleteBuffers(active_buffers.size(), active_buffers.data());
+	glDeleteTextures(active_textures.size(), active_textures.data());
 	glDeleteProgram(programID);
-	glDeleteTextures(1, &light_blue_texture);
-	glDeleteTextures(1, &dark_blue_texture);
-	glDeleteTextures(1, &yellow_texture);
-	glDeleteTextures(1, &orange_texture);
-	glDeleteTextures(1, &red_texture);
-	glDeleteTextures(1, &purple_texture);
-	glDeleteTextures(1, &green_texture);
-	glDeleteTextures(1, &I_billboard_texture);
-	glDeleteTextures(1, &J_billboard_texture);
-	glDeleteTextures(1, &L_billboard_texture);
-	glDeleteTextures(1, &O_billboard_texture);
-	glDeleteTextures(1, &S_billboard_texture);
-	glDeleteTextures(1, &Z_billboard_texture);
-	glDeleteTextures(1, &T_billboard_texture);
-	glDeleteTextures(1, &Texture);
 	glDeleteVertexArrays(1, &VertexArrayID);
 
 	// Close OpenGL window and terminate GLFW

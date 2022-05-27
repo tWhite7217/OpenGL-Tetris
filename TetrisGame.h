@@ -186,7 +186,7 @@ private:
                                {{RotationState::_0, RotationState::_R}, {{{0, 0}, {-1, 0}, {-1, 1}, {-2, 0}}}},
                                {{RotationState::_R, RotationState::_0}, {{{0, 0}, {-1, -1}, {-1, 0}, {-1, 1}}}},
                                {{RotationState::_R, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
-                               {{RotationState::_2, RotationState::_R}, {{{1, 1}, {0, 1}, {0, 2}, {0, 2}}}},
+                               {{RotationState::_2, RotationState::_R}, {{{1, 1}, {0, 1}, {0, 2}, {-1, 1}}}},
                                {{RotationState::_2, RotationState::_L}, {{{1, 1}, {0, 0}, {0, 1}, {-1, 1}}}},
                                {{RotationState::_L, RotationState::_2}, {{{-1, -1}, {-1, 0}, {-1, 1}, {-2, 0}}}},
                                {{RotationState::_L, RotationState::_0}, {{{0, 0}, {-1, -1}, {-1, 0}, {-1, 1}}}},
