@@ -641,30 +641,30 @@ int main(void)
 	camera_up_id = glGetUniformLocation(programID, "camera_up_worldspace");
 	camera_right_id = glGetUniformLocation(programID, "camera_right_worldspace");
 
-	load_texture(ssd_digit_texture, "SSD_Numbers.DDS");
-	load_texture(light_blue_texture, "light_blue_texture.DDS");
-	load_texture(dark_blue_texture, "dark_blue_texture.DDS");
-	load_texture(yellow_texture, "yellow_texture.DDS");
-	load_texture(orange_texture, "orange_texture.DDS");
-	load_texture(red_texture, "red_texture.DDS");
-	load_texture(purple_texture, "purple_texture.DDS");
-	load_texture(green_texture, "green_texture.DDS");
-	load_texture(I_billboard_texture, "I_billboard.DDS");
-	load_texture(J_billboard_texture, "J_billboard.DDS");
-	load_texture(L_billboard_texture, "L_billboard.DDS");
-	load_texture(O_billboard_texture, "O_billboard.DDS");
-	load_texture(S_billboard_texture, "S_billboard.DDS");
-	load_texture(Z_billboard_texture, "Z_billboard.DDS");
-	load_texture(T_billboard_texture, "T_billboard.DDS");
+	load_texture(ssd_digit_texture, "textures/SSD_Numbers.DDS");
+	load_texture(light_blue_texture, "textures/colors/light_blue.DDS");
+	load_texture(dark_blue_texture, "textures/colors/dark_blue.DDS");
+	load_texture(yellow_texture, "textures/colors/yellow.DDS");
+	load_texture(orange_texture, "textures/colors/orange.DDS");
+	load_texture(red_texture, "textures/colors/red.DDS");
+	load_texture(purple_texture, "textures/colors/purple.DDS");
+	load_texture(green_texture, "textures/colors/green.DDS");
+	load_texture(I_billboard_texture, "textures/billboards/I.DDS");
+	load_texture(J_billboard_texture, "textures/billboards/J.DDS");
+	load_texture(L_billboard_texture, "textures/billboards/L.DDS");
+	load_texture(O_billboard_texture, "textures/billboards/O.DDS");
+	load_texture(S_billboard_texture, "textures/billboards/S.DDS");
+	load_texture(Z_billboard_texture, "textures/billboards/Z.DDS");
+	load_texture(T_billboard_texture, "textures/billboards/T.DDS");
 
 	texture_sampler_id = glGetUniformLocation(programID, "textureSampler");
 	piece_type_flag_id = glGetUniformLocation(programID, "piece_type");
 	use_lighting_flag_id = glGetUniformLocation(programID, "use_lighting");
 	use_mvp_flag_id = glGetUniformLocation(programID, "use_mvp");
 
-	loadOBJ_into_vectors_and_buffers("tetris_cube_more_beveled.obj", tetris_square_obj);
-	loadOBJ_into_vectors_and_buffers("SSD_Digit.obj", scoreboard_obj);
-	loadOBJ_into_vectors_and_buffers("hold.obj", hold_obj);
+	loadOBJ_into_vectors_and_buffers("objs/tetris_cube_more_beveled.obj", tetris_square_obj);
+	loadOBJ_into_vectors_and_buffers("objs/SSD_Digit.obj", scoreboard_obj);
+	loadOBJ_into_vectors_and_buffers("objs/hold.obj", hold_obj);
 
 	auto lastTime = std::chrono::system_clock::now();
 

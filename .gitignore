@@ -1,6 +1,5 @@
+*.old*
 *.mtl
-*.obj
-*.dds
 *.exe
 *.png
 screenshots/
